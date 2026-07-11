@@ -82,3 +82,44 @@ I think I need to find a clear gameplay mechanic, and base the univese around th
     - This is like, every puzzle game ever...
 - Every event you do leads to a new event
 - Butterfly effect
+
+---
+
+Okay, pause. Let's talk about this a little bit more. My game must be based on a mechanic inspired by the theme, chain reaction. Let's think about mechanics now and find specifics later. I like the idea of *dominos* in some way. Dominos are the definition of a chain reaction, you set them up purely to knock them down. I want my game to be based on that... It's fun to set up, but even more fun to knock down!
+
+I want the fun to come from either the success of, causing of, a chain. Avoiding a chain happening, on the other hand, doesn't hit the theme hard enough in my mind. We *want* the theme to be intertwined with the game, so our goal is to make these chain events a positive thing (for the player) to cause.
+
+The **Event**: every chain-link in the chain reaction is the event. This event repeats over and over to form the whole chain. It must be a solid, discrete, observable event with a clear trigger and resolution. Each event is the trigger of the next event, and each event is in essence the same. We want the event to occur over and over again, but the player is challenged to keep their chain going as long as possible and rewarded for doing so.
+
+The **Setup**: like putting physical dominos on their ends, the player makes the decision to set up their chain event. For dominos, the joy comes from the creativity and the wonder: "What will this look like? How long will it take to collapse?"
+
+The **Chain**: when the player is ready, they knock over that first domino. They get to watch all their hard work come to fruition before their eyes.
+
+I think for this game to work, *the setup and watching the chain unfold must be equally fun*. I think a lot of fun can come from uncertainty of the plan, and having to course-correct, possibly at an expense.
+
+So what's the event? How does the player plan then execute it, and what can they do to correct it?
+
+- Bounce game. You need to bounce/launch your avatar through the level by setting up your launch stages/trampolines
+- Network game. You set up a network of connected nodes to help them communicate, but expanding the network makes it more confusing and causes more delays and confusions.
+    - Connect with the traveling salesman problem in some fun way? Idiot salesman doesn't know where to go and keeps getting confused by your expanding routes, maybe?
+    - We don't want the chain to be negative, though. The mailman has to use the chain events to his advantage (meeting other mailmen) to make it through
+
+### Idiot Mailman Game
+
+You have a network of a small number of nodes, and several idiotic mailmen who traverse the network by their given rules. When mailmen wind up in the same node, interesting things happen that lead to mail ultimately getting delivered.
+
+Mail always starts with ONE of the idiot mailmen. When two mailmen land on the same node, they handoff the letter.
+
+The goal is to get the mail to the mailbox. The mail can never start with a mailman who can reach the mailbox by their own rules.
+
+The challenge is to place enough roads between nodes from the budget that allows mail to arrive. The player has to navigate an increasingly-complex node map to get mail to the destination.
+
+Mailman rules:
+- Always handoff when on the same node
+
+Mailman types:
+- The right one: always heads to toward the target.
+- West/North/South/East: always head in this direction of route, if they can take it, otherwise stay in a location.
+- Trailer: follows one step behind the closest mailman
+- Follower: only follows the nearby mailman
+- Explorer: only goes to nodes they haven't visited
