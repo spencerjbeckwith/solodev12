@@ -1,10 +1,7 @@
-import { CarrierInit } from "./game/carrier";
-import { ParcelInit } from "./game/parcel";
-
 /** A position of a node or a vector */
 export interface Coord {
-    x: number;
-    y: number;
+    readonly x: number;
+    readonly y: number;
 }
 
 /** Returns a unique key for a Coord */
@@ -23,22 +20,21 @@ export function getEdgeKey(edge: Edge): string {
         .join("|");
 }
 
+/** Transforms a list of individual Coord objects (nodes) into a Nodes map */
+export function toNodes(nodes: Coord[]): Nodes {
+    return new Map(nodes.map((n) => [getCoordKey(n), n]));
+}
+
 /** Transforms a list of individual Edge objects to an Edges map */
 export function toEdges(edges: Edge[]): Edges {
     return new Map(edges.map((e) => [getEdgeKey(e), e]));
 }
+
+/** Map of all Nodes in the level, indexed by coordKey */
+export type Nodes = Map<string, Coord>;
 
 /** Map of all Edges currently in play between nodes, indexed by edgeKey */
 export type Edges = Map<string, Edge>;
 
 /** Map of all nodes/positions a given node connects to, indexed by coordKey */
 export type Adjacency = Map<string, Coord[]>;
-
-/** Immutable starting state of a playable level */
-export interface LevelDefinition {
-    nodes: Coord[];
-    edges: Edges;
-    budget: number;
-    carriers: CarrierInit[];
-    parcel: ParcelInit;
-}

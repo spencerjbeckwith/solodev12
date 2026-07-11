@@ -4,6 +4,7 @@ import { AudioEngine, SoundEffect } from "supersound";
 import { VIEW_HEIGHT, VIEW_WIDTH } from "./constants";
 import { GameState } from "./game/state";
 import { Layout } from "./ui/layout";
+import { Level } from "./game/level";
 
 const soundFiles = ["hover", "click"] as const;
 type SoundName = (typeof soundFiles)[number];
@@ -53,18 +54,7 @@ export function init(): Engine {
         }),
     ) as Record<SoundName, SoundEffect>;
 
-    const state = new GameState(
-        {
-            budget: 10,
-            edges: new Map(),
-            nodes: [],
-            carriers: [],
-            // @ts-ignore
-            parcel: null,
-        },
-        "solve",
-        true,
-    );
+    const state = new GameState(new Level(), "solve", true);
 
     const engine: Engine = {
         core,

@@ -1,5 +1,6 @@
-import { Adjacency, Coord, getCoordKey, Edges, LevelDefinition } from "../types";
+import { Adjacency, Coord, getCoordKey, Edges, Nodes } from "../types";
 import { Carrier } from "./carrier";
+import { Level } from "./level";
 import { Parcel } from "./parcel";
 
 export interface SolveState {
@@ -9,7 +10,7 @@ export interface SolveState {
 
 export interface RunState {
     tick: number;
-    nodes: Coord[];
+    nodes: Nodes;
     adjacency: Adjacency; // Tracks what nodes are accessible from other nodes
     carriers: Carrier[];
     parcel: Parcel;
@@ -19,12 +20,12 @@ export type GameStates = "edit" | "solve" | "run";
 
 export class GameState {
     state: GameStates;
-    level: LevelDefinition;
+    level: Level;
     solveState: SolveState | null;
     runState: RunState | null;
     canEdit: boolean;
 
-    constructor(level: LevelDefinition, startState: Exclude<GameStates, "run">, canEdit: boolean) {
+    constructor(level: Level, startState: Exclude<GameStates, "run">, canEdit: boolean) {
         this.state = startState;
         this.level = level;
         this.solveState = startState === "solve" || !canEdit ? this.newSolveState() : null;
