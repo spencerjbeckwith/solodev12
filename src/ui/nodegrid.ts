@@ -28,4 +28,9 @@ export class NodeGrid extends UIElement {
             this.children.push(new NodeButton(this.engine, coord.x, coord.y, this.canvas));
         }
     }
+
+    render() {
+        super.render();
+        // TODO: render edges between nodes
+    }
 }

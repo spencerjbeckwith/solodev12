@@ -10,7 +10,7 @@ export class NodeButton extends Button {
     constructor(engine: Engine, gx: number, gy: number, canvas?: HTMLCanvasElement) {
         const realX = GRID_OFFSET_X + gx * GRID_SIZE + GRID_SIZE / 2 - spr.actions.width / 2;
         const realY = GRID_OFFSET_Y + gy * GRID_SIZE + GRID_SIZE / 2 - spr.actions.height / 2;
-        super(engine, spr.actions, realX, realY, canvas);
+        super(engine, spr.actions, realX, realY, canvas, true, 1);
         this.gx = gx;
         this.gy = gy;
     }
