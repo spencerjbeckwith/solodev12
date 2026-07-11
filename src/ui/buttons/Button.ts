@@ -1,8 +1,7 @@
 import { SoundEffect } from "supersound";
 import { Sprite } from "supersprite";
-import { core, input, snd } from "../../core";
 import { UIElement } from "../element";
-import { GameState } from "../../game/state";
+import { Engine } from "../../engine";
 
 export class Button extends UIElement {
     // Configurable per button
@@ -18,17 +17,17 @@ export class Button extends UIElement {
     clicked: boolean;
 
     constructor(
-        state: GameState,
+        engine: Engine,
         sprite: Sprite,
         x: number,
         y: number,
         canvas?: HTMLCanvasElement,
         visible = true,
         padding = 0,
-        hover = snd.hover,
-        click = snd.click,
+        hover = engine.snd.hover,
+        click = engine.snd.click,
     ) {
-        super(state, x, y, visible);
+        super(engine, x, y, visible);
         this.sprite = sprite;
         this.hover = hover;
         this.click = click;
@@ -42,7 +41,7 @@ export class Button extends UIElement {
 
     frame() {
         if (
-            input.mouse.isIn(
+            this.engine.input.mouse.isIn(
                 this.x + this.padding,
                 this.y + this.padding,
                 this.x + this.sprite.width - this.padding,
@@ -60,20 +59,20 @@ export class Button extends UIElement {
                 this.hovered = true;
             }
 
-            if (input.mouse.pressed.mouseLeft) {
+            if (this.engine.input.mouse.pressed.mouseLeft) {
                 // Input's guard prevents playing the sound a lot at once
                 if (this.click) {
                     this.click.play();
                 }
             }
 
-            if (input.mouse.held.mouseLeft) {
+            if (this.engine.input.mouse.held.mouseLeft) {
                 this.clicked = true;
             } else {
                 this.clicked = false;
             }
 
-            if (input.mouse.released.mouseLeft) {
+            if (this.engine.input.mouse.released.mouseLeft) {
                 this.onClick();
             }
         } else {
@@ -83,7 +82,12 @@ export class Button extends UIElement {
     }
 
     render() {
-        core.draw.sprite(this.sprite, Number(this.hovered) + Number(this.clicked), this.x, this.y);
+        this.engine.core.draw.sprite(
+            this.sprite,
+            Number(this.hovered) + Number(this.clicked),
+            this.x,
+            this.y,
+        );
     }
 
     onClick() {}

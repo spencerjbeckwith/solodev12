@@ -1,0 +1,78 @@
+import { Core } from "supersprite";
+import { UnifiedInput } from "supercontroller";
+import { AudioEngine, SoundEffect } from "supersound";
+import { VIEW_HEIGHT, VIEW_WIDTH } from "./constants";
+import { GameState } from "./game/state";
+import { Layout } from "./ui/layout";
+
+const soundFiles = ["hover", "click"] as const;
+type SoundName = (typeof soundFiles)[number];
+
+const soundConfig: Record<SoundName, number> = {
+    hover: 4,
+    click: 2,
+};
+
+export interface Engine {
+    core: Core;
+    input: UnifiedInput;
+    snd: Record<SoundName, SoundEffect>;
+    state: GameState;
+    layout: Layout;
+}
+
+export function init(): Engine {
+    const core = new Core({
+        atlas: {
+            url: "dist/atlas.png",
+        },
+        presenter: {
+            baseWidth: VIEW_WIDTH,
+            baseHeight: VIEW_HEIGHT,
+        },
+    });
+    const input = new UnifiedInput({
+        referenceFrame: core.presenter.ctx?.canvas,
+    });
+
+    // Manual fix for issue to fix later: https://github.com/spencerjbeckwith/super/issues/6
+    function syncReferenceFrameScale() {
+        input.mouse.referenceFrameScale.x = core.presenter.scaleX;
+        input.mouse.referenceFrameScale.y = core.presenter.scaleY;
+    }
+    syncReferenceFrameScale();
+    window.addEventListener("resize", syncReferenceFrameScale);
+    window.addEventListener("orientationchange", syncReferenceFrameScale);
+
+    const ae = new AudioEngine();
+    const snd = Object.fromEntries(
+        soundFiles.map((name) => {
+            const sfx = new SoundEffect(ae.context, `assets/sounds/${name}.wav`, soundConfig[name]);
+            ae.register(sfx);
+            return [name, sfx];
+        }),
+    ) as Record<SoundName, SoundEffect>;
+
+    const state = new GameState(
+        {
+            budget: 10,
+            edges: new Map(),
+            nodes: [],
+            carriers: [],
+            // @ts-ignore
+            parcel: null,
+        },
+        "solve",
+        true,
+    );
+
+    const engine: Engine = {
+        core,
+        input,
+        snd,
+        state,
+        layout: null!,
+    };
+    engine.layout = new Layout(engine); // Fun workaround for dependency ordering... Oops.
+    return engine;
+}

@@ -1,13 +1,13 @@
-import { GameState } from "../game/state";
+import { Engine } from "../engine";
 
 export class UIElement {
-    state: GameState;
+    engine: Engine;
     x: number;
     y: number;
     visible: boolean;
 
-    constructor(state: GameState, x: number, y: number, visible = true) {
-        this.state = state;
+    constructor(engine: Engine, x: number, y: number, visible = true) {
+        this.engine = engine;
         this.x = x;
         this.y = y;
         this.visible = visible;

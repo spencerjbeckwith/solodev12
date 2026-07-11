@@ -1,37 +1,55 @@
-import { GameState, GameStates } from "../game/state";
+import { VIEW_WIDTH } from "../constants";
+import { Engine } from "../engine";
+import { GameStates } from "../game/state";
 import { DoneButton } from "./buttons/DoneButton";
 import { EditButton } from "./buttons/EditButton";
 import { RunButton } from "./buttons/RunButton";
 import { StopButton } from "./buttons/StopButton";
 import { UIElement } from "./element";
+import { TextElement } from "./text/text";
 
 export class Layout {
-    state: GameState;
+    engine: Engine;
     ui: Record<GameStates, UIElement[]>;
     canvas?: HTMLCanvasElement;
 
-    constructor(state: GameState, canvas: HTMLCanvasElement) {
-        this.state = state;
-        this.ui = {
-            edit: [new DoneButton(state, canvas)],
-            solve: [new RunButton(state, canvas), new EditButton(state, canvas)],
-            run: [new StopButton(state, canvas)],
-        };
+    constructor(engine: Engine) {
+        this.engine = engine;
+        const canvas = engine.core.presenter.ctx?.canvas;
         this.canvas = canvas;
+
+        // Declarative map of each element present in any given game state
+        this.ui = {
+            edit: [new DoneButton(engine, canvas)],
+            solve: [
+                new RunButton(engine, canvas),
+                new EditButton(engine, canvas),
+                new TextElement(
+                    engine,
+                    VIEW_WIDTH - 4,
+                    4,
+                    (state) => {
+                        return `Routes: ${state.solveState!.remaining}`;
+                    },
+                    { hAlign: "right", vAlign: "top" },
+                ),
+            ],
+            run: [new StopButton(engine, canvas)],
+        };
     }
 
     frame() {
         if (this.canvas) {
             this.canvas.style.cursor = "default";
         }
-        const current = this.ui[this.state.state].filter((e) => e.visible);
+        const current = this.ui[this.engine.state.state].filter((e) => e.visible);
         for (const element of current) {
             element.frame();
         }
     }
 
     render() {
-        const current = this.ui[this.state.state].filter((e) => e.visible);
+        const current = this.ui[this.engine.state.state].filter((e) => e.visible);
         for (const element of current) {
             element.render();
         }
