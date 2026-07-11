@@ -1,5 +1,5 @@
-import { CarrierInit } from "./carrier";
-import { ParcelInit } from "./parcel";
+import { CarrierInit } from "./game/carrier";
+import { ParcelInit } from "./game/parcel";
 
 /** A position of a node or a vector */
 export interface Coord {

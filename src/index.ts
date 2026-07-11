@@ -1,11 +1,8 @@
 import { Colors, DrawTextOptions } from "supersprite";
 import { VIEW_HEIGHT, VIEW_WIDTH } from "./constants";
 import { core, input } from "./core";
-import { Button } from "./ui/Button";
-import spr from "./sprites.json";
-import { GameState } from "./state";
-
-// Is there a better place to keep GameState?
+import { GameState } from "./game/state";
+import { Layout } from "./ui/layout";
 
 const gs = new GameState(
     {
@@ -19,24 +16,7 @@ const gs = new GameState(
     "solve",
     true,
 );
-
-const run = new Button(
-    spr.run,
-    0,
-    0,
-    () => {
-        if (gs.state === "solve") {
-            run.sprite = spr.stop;
-            gs.toState("run");
-        } else if (gs.state === "run") {
-            run.sprite = spr.run;
-            gs.toState("solve");
-        }
-    },
-    2,
-);
-
-const edit = new Button(spr.edit, 0, 32, () => {}, 7);
+const layout = new Layout(gs, core.presenter.ctx!.canvas);
 
 const remainingStyle: DrawTextOptions = {
     hAlign: "right",
@@ -54,12 +34,14 @@ function main() {
         core.draw.line(32, y, VIEW_WIDTH - 32, y);
     }
 
-    run.frame();
-    edit.frame();
-    run.render();
-    edit.render();
+    // Frame logic
+    layout.frame();
+
+    // Render
+    layout.render();
 
     if (gs.state === "solve") {
+        // TODO: text uielement
         core.draw.text(`Routes: ${gs.solveState!.remaining}`, VIEW_WIDTH - 4, 4, remainingStyle);
     }
 

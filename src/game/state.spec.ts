@@ -1,7 +1,7 @@
 import { describe, it } from "mocha";
 import expect from "expect";
 import { GameState } from "./state";
-import { LevelDefinition, toEdges } from "./types";
+import { LevelDefinition, toEdges } from "../types";
 
 describe("GameState", () => {
     function getLevel(): LevelDefinition {

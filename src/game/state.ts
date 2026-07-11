@@ -1,5 +1,4 @@
-import { Adjacency, Coord, getCoordKey } from "./types";
-import { Edges, LevelDefinition } from "./types";
+import { Adjacency, Coord, getCoordKey, Edges, LevelDefinition } from "../types";
 import { Carrier } from "./carrier";
 import { Parcel } from "./parcel";
 
