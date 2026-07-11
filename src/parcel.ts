@@ -8,4 +8,8 @@ export class Parcel {
     constructor(init: ParcelInit) {
         // TODO
     }
+
+    render() {
+        // TODO
+    }
 }

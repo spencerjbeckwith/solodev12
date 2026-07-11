@@ -16,21 +16,21 @@ describe("GameState", () => {
     }
 
     it("can initialize in edit mode", () => {
-        const gs = new GameState(getLevel(), "edit");
+        const gs = new GameState(getLevel(), "edit", true);
         expect(gs.state).toBe("edit");
         expect(gs.solveState).toBeNull();
         expect(gs.runState).toBeNull();
     });
 
     it("can initialize in solve mode", () => {
-        const gs = new GameState(getLevel(), "solve");
+        const gs = new GameState(getLevel(), "solve", true);
         expect(gs.state).toBe("solve");
         expect(gs.solveState).not.toBeNull();
         expect(gs.runState).toBeNull();
     });
 
     it("runs state transitions", () => {
-        const gs = new GameState(getLevel(), "edit");
+        const gs = new GameState(getLevel(), "edit", true);
         gs.toState("solve");
         expect(gs.state).toBe("solve");
         expect(gs.solveState).not.toBeNull();
@@ -47,7 +47,7 @@ describe("GameState", () => {
     });
 
     it("does nothing on invalid state transitions", () => {
-        const gs = new GameState(getLevel(), "edit");
+        const gs = new GameState(getLevel(), "edit", true);
         gs.toState("run");
         expect(gs.state).toBe("edit");
 
@@ -61,7 +61,7 @@ describe("GameState", () => {
     });
 
     it("builds adjacency between nodes", () => {
-        const gs = new GameState(getLevel(), "edit");
+        const gs = new GameState(getLevel(), "edit", true);
         const adj = gs.buildAdjacency(
             toEdges([
                 [
@@ -95,7 +95,7 @@ describe("GameState", () => {
     });
 
     it("combines level-defined and player-placed edges", () => {
-        const gs = new GameState(getLevel(), "edit");
+        const gs = new GameState(getLevel(), "edit", true);
         const adj = gs.buildAdjacency(
             toEdges([
                 [
@@ -130,7 +130,7 @@ describe("GameState", () => {
     });
 
     it("deduplicates edges defined in opposite directions", () => {
-        const gs = new GameState(getLevel(), "edit");
+        const gs = new GameState(getLevel(), "edit", true);
         const adj = gs.buildAdjacency(
             toEdges([
                 [

@@ -4,6 +4,7 @@
     "description": "",
     "publish": false,
     "scripts": {
+        "atlas": "npx supersprite -d assets/sprites -a dist/atlas.png -m src/sprites.json",
         "build": "npx rollup -c rollup.config.js",
         "serve": "npx serve",
         "test": "mocha"
@@ -12,7 +13,7 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "supercontroller": "^1.0.4",
+        "supercontroller": "^1.0.5",
         "supersound": "^1.0.2",
         "supersprite": "^3.0.4"
     },

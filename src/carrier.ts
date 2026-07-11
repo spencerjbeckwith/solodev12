@@ -8,4 +8,8 @@ export class Carrier {
     constructor(init: CarrierInit) {
         // TODO
     }
+
+    render() {
+        // TODO
+    }
 }

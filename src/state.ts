@@ -23,12 +23,14 @@ export class GameState {
     level: LevelDefinition;
     solveState: SolveState | null;
     runState: RunState | null;
+    canEdit: boolean;
 
-    constructor(level: LevelDefinition, startState: Exclude<GameStates, "run">) {
+    constructor(level: LevelDefinition, startState: Exclude<GameStates, "run">, canEdit: boolean) {
         this.state = startState;
         this.level = level;
-        this.solveState = startState === "solve" ? this.newSolveState() : null;
+        this.solveState = startState === "solve" || !canEdit ? this.newSolveState() : null;
         this.runState = null;
+        this.canEdit = canEdit;
     }
 
     // Edit <---> Solve <---> Run
@@ -55,6 +57,7 @@ export class GameState {
                 break;
             case "solve->edit":
                 // Unset solve state, back to level edit mode
+                if (!this.canEdit) return;
                 this.state = newState;
                 this.solveState = null;
                 break;
