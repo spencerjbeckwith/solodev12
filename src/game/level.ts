@@ -1,6 +1,9 @@
+import { Draw } from "supersprite";
 import { Edges, getCoordKey, Nodes } from "../types";
 import { CarrierInit } from "./carrier";
 import { ParcelInit } from "./parcel";
+import spr from "../sprites.json";
+import { GRID_OFFSET_X, GRID_OFFSET_Y, GRID_SIZE } from "../constants";
 
 /** Immutable starting state of a playable level */
 export interface LevelDefinition {
@@ -52,6 +55,20 @@ export class Level {
 
     save() {
         // TODO: write to JSON (how does this handle maps?)
+    }
+
+    render(draw: Draw) {
+        // Render edges (each lands below the node)
+        // TODO
+
+        // Render nodes
+        for (const [coordKey, coord] of this.nodes) {
+            const sprite = spr.node;
+            const px = GRID_OFFSET_X + coord.x * GRID_SIZE + GRID_SIZE / 2 - sprite.width / 2;
+            const py = GRID_OFFSET_Y + coord.y * GRID_SIZE + GRID_SIZE / 2 - sprite.height / 2;
+            const image = (coord.x + coord.y) % sprite.images.length;
+            draw.sprite(sprite, image, px, py);
+        }
     }
 
     /** Returns a new, empty LevelDefinition */

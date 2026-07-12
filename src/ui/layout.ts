@@ -5,6 +5,7 @@ import { DoneButton } from "./buttons/DoneButton";
 import { EditButton } from "./buttons/EditButton";
 import { RunButton } from "./buttons/RunButton";
 import { StopButton } from "./buttons/StopButton";
+import { EdgeGrid } from "./edgegrid";
 import { UIElement } from "./element";
 import { NodeGrid } from "./nodegrid";
 import { TextElement } from "./text/text";
@@ -21,7 +22,11 @@ export class Layout {
 
         // Declarative map of each element present in any given game state
         this.ui = {
-            edit: [new DoneButton(engine, canvas), new NodeGrid(engine, canvas)],
+            edit: [
+                new DoneButton(engine, canvas),
+                new NodeGrid(engine, canvas),
+                new EdgeGrid(engine, () => {}),
+            ],
             solve: [
                 new RunButton(engine, canvas),
                 new EditButton(engine, canvas),
@@ -34,6 +39,7 @@ export class Layout {
                     },
                     { hAlign: "right", vAlign: "top" },
                 ),
+                new EdgeGrid(engine, () => {}),
             ],
             run: [new StopButton(engine, canvas)],
         };
