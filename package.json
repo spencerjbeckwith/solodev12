@@ -15,7 +15,7 @@
     "dependencies": {
         "supercontroller": "^1.0.5",
         "supersound": "^1.0.2",
-        "supersprite": "^3.0.4"
+        "supersprite": "^3.0.5"
     },
     "devDependencies": {
         "@rollup/plugin-commonjs": "^29.0.3",

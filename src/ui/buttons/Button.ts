@@ -15,6 +15,7 @@ export class Button extends UIElement {
     visible: boolean;
     hovered: boolean;
     clicked: boolean;
+    pressedOn: boolean;
 
     constructor(
         engine: Engine,
@@ -37,6 +38,7 @@ export class Button extends UIElement {
         this.visible = true;
         this.hovered = false;
         this.clicked = false;
+        this.pressedOn = false;
     }
 
     frame() {
@@ -60,24 +62,24 @@ export class Button extends UIElement {
             }
 
             if (this.engine.input.mouse.pressed.mouseLeft) {
+                this.pressedOn = true;
                 // Input's guard prevents playing the sound a lot at once
                 if (this.click) {
                     this.click.play();
                 }
             }
 
-            if (this.engine.input.mouse.held.mouseLeft) {
-                this.clicked = true;
-            } else {
-                this.clicked = false;
-            }
-
-            if (this.engine.input.mouse.released.mouseLeft) {
+            this.clicked = this.pressedOn && this.engine.input.mouse.held.mouseLeft;
+            if (this.pressedOn && this.engine.input.mouse.released.mouseLeft) {
                 this.onClick();
             }
         } else {
             this.hovered = false;
             this.clicked = false;
+        }
+
+        if (!this.engine.input.mouse.pressed.mouseLeft && !this.engine.input.mouse.held.mouseLeft) {
+            this.pressedOn = false;
         }
     }
 

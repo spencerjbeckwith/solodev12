@@ -16,7 +16,11 @@ export class NodeButton extends Button {
     }
 
     onClick() {
-        this.engine.state.level.toggleNode(this.gx, this.gy);
+        if (this.engine.state.level.toggleNode(this.gx, this.gy)) {
+            this.engine.snd.place.play();
+        } else {
+            this.engine.snd.break.play();
+        }
     }
 
     render() {

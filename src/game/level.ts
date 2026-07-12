@@ -1,5 +1,5 @@
 import { Draw } from "supersprite";
-import { Edges, getCoordKey, Nodes } from "../types";
+import { Coord, Edge, Edges, getCoordKey, getEdgeKey, Nodes } from "../types";
 import { CarrierInit } from "./carrier";
 import { ParcelInit } from "./parcel";
 import spr from "../sprites.json";
@@ -39,13 +39,100 @@ export class Level {
     }
 
     /** Toggles a node at the given X and Y coordinates */
-    toggleNode(gx: number, gy: number) {
+    toggleNode(gx: number, gy: number): boolean {
         const coord = { x: gx, y: gy };
         const coordKey = getCoordKey(coord);
         if (this.nodes.has(coordKey)) {
             this.nodes.delete(coordKey);
+            return false;
         } else {
             this.nodes.set(coordKey, coord);
+            return true;
+        }
+    }
+
+    /** Returns if an Edge may be added between two Coords */
+    isValidEdge(edge: Edge, requireNodes: boolean): boolean {
+        const from = edge[0];
+        const to = edge[1];
+
+        // Nodes must be different
+        if (from.x === to.x && from.y === to.y) return false;
+
+        // Nodes must be immediate neighbors
+        if (Math.abs(from.x - to.x) > 1 || Math.abs(from.y - to.y) > 1) return false;
+
+        // Ensure diagonal nodes are not crossed
+        if (this.isDiagonal(edge)) {
+            const opposing = this.getOpposingDiagonal(edge);
+            if (this.edges.get(getEdgeKey(opposing))) {
+                return false;
+            }
+        }
+
+        // Ensure nodes are present (if required)
+        if (requireNodes) {
+            if (!this.nodes.get(getCoordKey(from)) || !this.nodes.get(getCoordKey(to))) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    isDiagonal(edge: Edge): boolean {
+        return edge[0].x !== edge[1].x && edge[0].y !== edge[1].y;
+    }
+
+    getOpposingDiagonal(edge: Edge): Edge {
+        const minX = Math.min(edge[0].x, edge[1].x);
+        const maxX = Math.max(edge[0].x, edge[1].x);
+        const minY = Math.min(edge[0].y, edge[1].y);
+        const maxY = Math.max(edge[0].y, edge[1].y);
+        const slopeDown =
+            (edge[0].x === minX && edge[0].y === minY) ||
+            (edge[0].x === maxX && edge[0].y === maxY);
+        return slopeDown
+            ? [
+                  {
+                      x: minX,
+                      y: maxY,
+                  },
+                  {
+                      x: maxX,
+                      y: minY,
+                  },
+              ]
+            : [
+                  {
+                      x: minX,
+                      y: minY,
+                  },
+                  {
+                      x: maxX,
+                      y: maxY,
+                  },
+              ];
+    }
+
+    /** Toggles an Edge connecting two Coords */
+    // This doesn't check if the edge is valid: call isValidEdge before!
+    toggleEdge(edge: Edge): boolean {
+        const edgeKey = getEdgeKey(edge);
+        if (this.edges.has(edgeKey)) {
+            this.edges.delete(edgeKey);
+            return false;
+        } else {
+            this.edges.set(edgeKey, edge);
+
+            // If either node doesn't exist, create it
+            for (const coord of edge) {
+                const coordKey = getCoordKey(coord);
+                if (!this.nodes.has(coordKey)) {
+                    this.nodes.set(coordKey, coord);
+                }
+            }
+            return true;
         }
     }
 
