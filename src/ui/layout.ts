@@ -25,7 +25,7 @@ export class Layout {
             edit: [
                 new DoneButton(engine, canvas),
                 new NodeGrid(engine, canvas),
-                new EdgeGrid(engine, () => {}),
+                new EdgeGrid(engine, canvas),
             ],
             solve: [
                 new RunButton(engine, canvas),
@@ -39,7 +39,7 @@ export class Layout {
                     },
                     { hAlign: "right", vAlign: "top" },
                 ),
-                new EdgeGrid(engine, () => {}),
+                new EdgeGrid(engine, canvas),
             ],
             run: [new StopButton(engine, canvas)],
         };

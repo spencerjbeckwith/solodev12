@@ -8,6 +8,7 @@ export class StopButton extends Button {
     }
 
     onClick() {
+        this.engine.snd.stop.play();
         this.engine.state.toState("solve");
     }
 }

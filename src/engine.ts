@@ -6,7 +6,7 @@ import { GameState } from "./game/state";
 import { Layout } from "./ui/layout";
 import { Level } from "./game/level";
 
-const soundFiles = ["hover", "click", "place", "break", "no"] as const;
+const soundFiles = ["hover", "click", "place", "break", "no", "start", "stop"] as const;
 type SoundName = (typeof soundFiles)[number];
 
 const soundConfig: Record<SoundName, number> = {
@@ -15,6 +15,8 @@ const soundConfig: Record<SoundName, number> = {
     place: 1,
     break: 1,
     no: 1,
+    start: 1,
+    stop: 1,
 };
 
 export interface Engine {

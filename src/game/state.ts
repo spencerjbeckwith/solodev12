@@ -1,4 +1,12 @@
-import { Adjacency, Coord, getCoordKey, Edges, Nodes } from "../types";
+import {
+    Adjacency,
+    getCoordKey,
+    Edges,
+    Nodes,
+    Edge,
+    getEdgeKey,
+    EdgePlacementResult,
+} from "../types";
 import { Carrier } from "./carrier";
 import { Level } from "./level";
 import { Parcel } from "./parcel";
@@ -107,5 +115,50 @@ export class GameState {
             }
         });
         return adj;
+    }
+
+    isValidEdge(edge: Edge): boolean {
+        if (this.state === "solve" && this.solveState) {
+            // Not allowed to change edges in the level when solving
+            const edgeKey = getEdgeKey(edge);
+            if (this.level.edges.has(edgeKey)) {
+                return false;
+            }
+
+            const allEdges = new Map([...this.level.edges, ...this.solveState.placed]);
+            return this.level.isValidEdge(edge, allEdges, true);
+        }
+        return this.level.isValidEdge(edge, this.level.edges, false);
+    }
+
+    toggleEdge(edge: Edge): EdgePlacementResult {
+        if (this.state === "edit") {
+            return this.level.toggleEdge(edge);
+        }
+        if (this.state === "solve") {
+            return this.toggleSolveEdge(edge);
+        }
+        return "blocked";
+    }
+
+    toggleSolveEdge(edge: Edge): EdgePlacementResult {
+        const solve = this.solveState;
+        if (solve) {
+            const edgeKey = getEdgeKey(edge);
+            if (solve.placed.has(edgeKey)) {
+                solve.placed.delete(edgeKey);
+                solve.remaining++;
+                return "removed";
+            } else {
+                if (solve.remaining > 0) {
+                    solve.placed.set(edgeKey, edge);
+                    solve.remaining--;
+                    return "placed";
+                } else {
+                    return "blocked";
+                }
+            }
+        }
+        return "blocked";
     }
 }

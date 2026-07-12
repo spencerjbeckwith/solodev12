@@ -1,5 +1,5 @@
 import { Draw } from "supersprite";
-import { Coord, Edge, Edges, getCoordKey, getEdgeKey, Nodes } from "../types";
+import { Edge, EdgePlacementResult, Edges, getCoordKey, getEdgeKey, Nodes } from "../types";
 import { CarrierInit } from "./carrier";
 import { ParcelInit } from "./parcel";
 import spr from "../sprites.json";
@@ -52,7 +52,7 @@ export class Level {
     }
 
     /** Returns if an Edge may be added between two Coords */
-    isValidEdge(edge: Edge, requireNodes: boolean): boolean {
+    isValidEdge(edge: Edge, edges: Edges, requireNodes: boolean): boolean {
         const from = edge[0];
         const to = edge[1];
 
@@ -65,7 +65,7 @@ export class Level {
         // Ensure diagonal nodes are not crossed
         if (this.isDiagonal(edge)) {
             const opposing = this.getOpposingDiagonal(edge);
-            if (this.edges.get(getEdgeKey(opposing))) {
+            if (edges.get(getEdgeKey(opposing))) {
                 return false;
             }
         }
@@ -84,15 +84,19 @@ export class Level {
         return edge[0].x !== edge[1].x && edge[0].y !== edge[1].y;
     }
 
+    /** True if the diagonal runs top-left to bottom-right (\), i.e. y increases with x */
+    slopesDown(edge: Edge): boolean {
+        const left = edge[0].x < edge[1].x ? edge[0] : edge[1];
+        const right = edge[0].x < edge[1].x ? edge[1] : edge[0];
+        return left.y < right.y;
+    }
+
     getOpposingDiagonal(edge: Edge): Edge {
         const minX = Math.min(edge[0].x, edge[1].x);
         const maxX = Math.max(edge[0].x, edge[1].x);
         const minY = Math.min(edge[0].y, edge[1].y);
         const maxY = Math.max(edge[0].y, edge[1].y);
-        const slopeDown =
-            (edge[0].x === minX && edge[0].y === minY) ||
-            (edge[0].x === maxX && edge[0].y === maxY);
-        return slopeDown
+        return this.slopesDown(edge)
             ? [
                   {
                       x: minX,
@@ -117,11 +121,11 @@ export class Level {
 
     /** Toggles an Edge connecting two Coords */
     // This doesn't check if the edge is valid: call isValidEdge before!
-    toggleEdge(edge: Edge): boolean {
+    toggleEdge(edge: Edge): EdgePlacementResult {
         const edgeKey = getEdgeKey(edge);
         if (this.edges.has(edgeKey)) {
             this.edges.delete(edgeKey);
-            return false;
+            return "removed";
         } else {
             this.edges.set(edgeKey, edge);
 
@@ -132,7 +136,7 @@ export class Level {
                     this.nodes.set(coordKey, coord);
                 }
             }
-            return true;
+            return "placed";
         }
     }
 
@@ -144,9 +148,16 @@ export class Level {
         // TODO: write to JSON (how does this handle maps?)
     }
 
-    render(draw: Draw) {
+    render(draw: Draw, playerEdges?: Edges) {
         // Render edges (each lands below the node)
-        // TODO
+        for (const [edgeKey, edge] of this.edges) {
+            this.renderEdge(draw, edge, false);
+        }
+        if (playerEdges) {
+            for (const [edgeKey, edge] of playerEdges) {
+                this.renderEdge(draw, edge, true);
+            }
+        }
 
         // Render nodes
         for (const [coordKey, coord] of this.nodes) {
@@ -158,12 +169,60 @@ export class Level {
         }
     }
 
+    renderEdge(draw: Draw, edge: Edge, playerBuilt: boolean) {
+        const sprite = spr.edge;
+
+        // Determine image to render:
+        // 0: horizontal
+        // 1: vertical
+        // 2: sloping down
+        // 3: sloping up
+        // +4 for player-built
+        let image: number;
+        if (edge[0].y === edge[1].y) {
+            image = 0;
+        } else if (edge[0].x === edge[1].x) {
+            image = 1;
+        } else {
+            image = this.slopesDown(edge) ? 2 : 3;
+        }
+
+        // Determine X and Y to place the sprite (based on image).
+        // The sprite is one grid-gap wide, so its ends bridge adjacent node centers.
+        // Anchor from the center of the top-left node the edge touches (min x, min y).
+        const minX = Math.min(edge[0].x, edge[1].x);
+        const minY = Math.min(edge[0].y, edge[1].y);
+        const cx = GRID_OFFSET_X + minX * GRID_SIZE + GRID_SIZE / 2;
+        const cy = GRID_OFFSET_Y + minY * GRID_SIZE + GRID_SIZE / 2;
+
+        let x: number;
+        let y: number;
+        if (image === 0) {
+            // Horizontal: run right from the left node's center, centered vertically
+            x = cx;
+            y = cy - sprite.height / 2;
+        } else if (image === 1) {
+            // Vertical: run down from the top node's center, centered horizontally
+            x = cx - sprite.width / 2;
+            y = cy;
+        } else {
+            // Diagonal (both slopes): sprite fills the cell between the two node centers
+            x = cx;
+            y = cy;
+        }
+
+        if (playerBuilt) {
+            image += 4;
+        }
+        draw.sprite(sprite, image, x, y + 3);
+    }
+
     /** Returns a new, empty LevelDefinition */
     static definition(): LevelDefinition {
         const def: LevelDefinition = {
             nodes: new Map(),
             edges: new Map(),
-            budget: 0,
+            budget: 5,
             carriers: [],
             // @ts-ignore
             parcel: null, // TODO: define parcel

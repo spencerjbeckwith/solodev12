@@ -8,6 +8,7 @@ export class RunButton extends Button {
     }
 
     onClick() {
+        this.engine.snd.start.play();
         this.engine.state.toState("run");
     }
 }

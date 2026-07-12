@@ -1,22 +1,30 @@
+import { Color } from "supersprite";
 import { GRID_OFFSET_X, GRID_OFFSET_Y, GRID_SIZE, GRID_SIZE_H, GRID_SIZE_W } from "../constants";
 import { Engine } from "../engine";
 import { Coord, Edge, getCoordKey } from "../types";
 import { UIElement } from "./element";
 
-export type CreateEdgeFunction = (from: Coord, to: Coord) => void;
-
 export class EdgeGrid extends UIElement {
-    create: CreateEdgeFunction;
     dragging: boolean;
     from: Coord | null;
     edgeDragMargin: number;
+    canvas?: HTMLCanvasElement;
 
-    constructor(engine: Engine, create: CreateEdgeFunction) {
+    // UI effects
+    n: number;
+    dragColor: Color;
+    confirmColor: Color;
+
+    constructor(engine: Engine, canvas?: HTMLCanvasElement) {
         super(engine, 0, 0, true);
-        this.create = create;
         this.dragging = false;
         this.from = null;
         this.edgeDragMargin = 7;
+        this.canvas = canvas;
+
+        this.n = 0;
+        this.dragColor = new Color("#b0b0c0");
+        this.confirmColor = new Color("#41c502");
     }
 
     frame() {
@@ -40,17 +48,17 @@ export class EdgeGrid extends UIElement {
                     if (getCoordKey(this.from) !== getCoordKey(to)) {
                         // Released on another node, see if we can connect to it
                         const edge: Edge = [this.from, to];
-                        if (
-                            this.engine.state.level.isValidEdge(
-                                edge,
-                                this.engine.state.state === "solve",
-                                // ^ Require nodes in solve mode
-                            )
-                        ) {
-                            if (this.engine.state.level.toggleEdge(edge)) {
-                                this.engine.snd.place.play();
-                            } else {
-                                this.engine.snd.break.play();
+                        if (this.engine.state.isValidEdge(edge)) {
+                            switch (this.engine.state.toggleEdge(edge)) {
+                                case "placed":
+                                    this.engine.snd.place.play();
+                                    break;
+                                case "removed":
+                                    this.engine.snd.break.play();
+                                    break;
+                                case "blocked":
+                                    this.engine.snd.no.play();
+                                    break;
                             }
                         } else {
                             this.engine.snd.no.play();
@@ -91,18 +99,40 @@ export class EdgeGrid extends UIElement {
         if (!this.dragging) {
             if (gx !== null && gy !== null) {
                 // Mouse is within a node's clickable region, show an indicator
-                // TODO
+                if (this.canvas) {
+                    this.canvas.style.cursor = "grab";
+                }
             }
         } else {
+            // Pulse effect when dragging
+            this.n += Math.PI / 45;
+            if (this.n >= Math.PI * 2) {
+                this.n -= Math.PI * 2;
+            }
+            this.dragColor.alpha = 0.7 + Math.sin(this.n) * 0.3;
+
             // Show drag of the route to target mouse position
-            if (this.from !== null && gx !== null && gy !== null) {
-                // TODO in solve mode, don't draw the line unless there's a node at both ends!
+            if (this.from && this.canvas) {
+                this.canvas.style.cursor = "grabbing";
                 this.engine.core.draw.line(
                     this.gridToMouseX(this.from.x),
                     this.gridToMouseY(this.from.y),
-                    this.gridToMouseX(gx),
-                    this.gridToMouseY(gy),
+                    this.engine.input.mouse.x,
+                    this.engine.input.mouse.y,
+                    this.dragColor,
                 );
+            }
+            if (this.from !== null && gx !== null && gy !== null) {
+                const e: Edge = [this.from, { x: gx, y: gy }];
+                if (this.engine.state.isValidEdge(e)) {
+                    this.engine.core.draw.line(
+                        this.gridToMouseX(this.from.x),
+                        this.gridToMouseY(this.from.y),
+                        this.gridToMouseX(gx),
+                        this.gridToMouseY(gy),
+                        this.confirmColor,
+                    );
+                }
             }
         }
     }

@@ -38,3 +38,5 @@ export type Edges = Map<string, Edge>;
 
 /** Map of all nodes/positions a given node connects to, indexed by coordKey */
 export type Adjacency = Map<string, Coord[]>;
+
+export type EdgePlacementResult = "placed" | "removed" | "blocked";

@@ -90,6 +90,7 @@ describe("Level", () => {
                     y: 0,
                 },
             ],
+            level.edges,
             false,
         );
         expect(valid).toBe(false);
@@ -108,6 +109,7 @@ describe("Level", () => {
                     y: 0,
                 },
             ],
+            level.edges,
             true,
         );
         expect(valid).toBe(false);

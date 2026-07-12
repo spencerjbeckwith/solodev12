@@ -10,7 +10,7 @@ function main() {
     engine.layout.frame();
 
     // Render
-    engine.state.level.render(engine.core.draw);
+    engine.state.level.render(engine.core.draw, engine.state.solveState?.placed);
     engine.layout.render();
 
     engine.core.endRender();
