@@ -127,10 +127,10 @@ export class Carrier extends Entity {
     }
 }
 
-export function renderCarrierInit(draw: Draw, node: Coord, heading: number) {
+export function renderCarrierInit(draw: Draw, gx: number, gy: number, heading: number) {
     const s = carrierSprites[heading];
-    const x = gridToPixelX(node.x) - s.spr.width / 2;
-    const y = gridToPixelY(node.y) - s.spr.height + 4;
+    const x = gridToPixelX(gx) - s.spr.width / 2;
+    const y = gridToPixelY(gy) - s.spr.height + 4;
     const t = s.mirror ? mirrorTransform : undefined;
     draw.sprite(s.spr, 0, x, y, t);
 }

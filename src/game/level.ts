@@ -1,10 +1,11 @@
 import { Draw } from "supersprite";
 import { Edge, EdgePlacementResult, Edges, Nodes } from "../types";
 import { CarrierInit, renderCarrierInit } from "./entities/carrier";
-import { ParcelInit } from "./entities/parcel";
+import { ParcelInit, renderParcelInit } from "./entities/parcel";
 import spr from "../sprites.json";
 import { getCoordKey, getEdgeKey, gridToPixelX, gridToPixelY } from "../utils";
-import { DestinationInit } from "./entities/destination";
+import { DestinationInit, renderDestinationInit } from "./entities/destination";
+import { GameStates } from "./state";
 
 /** Immutable starting state of a playable level */
 export interface LevelDefinition {
@@ -38,27 +39,26 @@ export class Level {
         // Load resources for each init
         this.carriers = new Map();
         for (const init of definition.carriers) {
-            this.carriers.set(getCoordKey({ x: init.gx, y: init.gy }), init);
+            this.carriers.set(getCoordKey(init.gx, init.gy), init);
         }
         this.parcels = new Map();
         for (const init of definition.parcels) {
-            this.parcels.set(getCoordKey({ x: init.gx, y: init.gy }), init);
+            this.parcels.set(getCoordKey(init.gx, init.gy), init);
         }
         this.destinations = new Map();
         for (const init of definition.destinations) {
-            this.destinations.set(getCoordKey({ x: init.gx, y: init.gy }), init);
+            this.destinations.set(getCoordKey(init.gx, init.gy), init);
         }
     }
 
     /** Returns if the given grid X and Y coordinates are on a node in the level */
     hasNode(gx: number, gy: number): boolean {
-        return this.nodes.has(getCoordKey({ x: gx, y: gy }));
+        return this.nodes.has(getCoordKey(gx, gy));
     }
 
     /** Toggles a node at the given X and Y coordinates */
     toggleNode(gx: number, gy: number): boolean {
-        const coord = { x: gx, y: gy };
-        const coordKey = getCoordKey(coord);
+        const coordKey = getCoordKey(gx, gy);
         if (this.nodes.has(coordKey)) {
             this.nodes.delete(coordKey);
 
@@ -76,39 +76,87 @@ export class Level {
 
             return false;
         } else {
-            this.nodes.set(coordKey, coord);
+            this.nodes.set(coordKey, { x: gx, y: gy });
             return true;
         }
     }
 
-    /** Toggles a carrier at the given X and Y coordinates */
+    /** Toggles a Carrier at the given X and Y grid coordinates */
     toggleCarrier(gx: number, gy: number): boolean {
-        const coord = { x: gx, y: gy };
-        const coordKey = getCoordKey(coord);
+        const coordKey = getCoordKey(gx, gy);
         if (this.carriers.has(coordKey)) {
             this.carriers.delete(coordKey);
             return false;
         } else {
             this.carriers.set(coordKey, {
-                gx: coord.x,
-                gy: coord.y,
+                gx,
+                gy,
                 heading: 6,
                 hasParcel: false,
             });
 
             // If no node at this location, create one
             if (!this.nodes.has(coordKey)) {
-                this.nodes.set(coordKey, coord);
+                this.nodes.set(coordKey, { x: gx, y: gy });
             }
             return true;
         }
     }
 
-    /** Returns a CarrierInit object at a given position */
+    /** Toggles a Parcel at the given X and Y grid coordinates */
+    toggleParcel(gx: number, gy: number): boolean {
+        const coordKey = getCoordKey(gx, gy);
+        if (this.parcels.has(coordKey)) {
+            this.parcels.delete(coordKey);
+            return false;
+        } else {
+            this.parcels.set(coordKey, {
+                gx,
+                gy,
+            });
+
+            // If no node at this location, create one
+            if (!this.nodes.has(coordKey)) {
+                this.nodes.set(coordKey, { x: gx, y: gy });
+            }
+            return true;
+        }
+    }
+
+    /** Toggles a Destination at the given X and Y grid coordinates */
+    toggleDestination(gx: number, gy: number): boolean {
+        const coordKey = getCoordKey(gx, gy);
+        if (this.destinations.has(coordKey)) {
+            this.destinations.delete(coordKey);
+            return false;
+        } else {
+            this.destinations.set(coordKey, {
+                gx,
+                gy,
+            });
+
+            // If no node at this location, create one
+            if (!this.nodes.has(coordKey)) {
+                this.nodes.set(coordKey, { x: gx, y: gy });
+            }
+            return true;
+        }
+        // It would be nice to merge these into some toggleEntity function (too bad I'm almost out of time)
+    }
+
+    /** Returns a CarrierInit object at a given node, if any */
     getCarrierInit(gx: number, gy: number): CarrierInit | undefined {
-        const coord = { x: gx, y: gy };
-        const coordKey = getCoordKey(coord);
-        return this.carriers.get(coordKey);
+        return this.carriers.get(getCoordKey(gx, gy));
+    }
+
+    /** Returns a ParcelInit object at a given node, if any */
+    getParcelInit(gx: number, gy: number): ParcelInit | undefined {
+        return this.parcels.get(getCoordKey(gx, gy));
+    }
+
+    /** Returns a DestinationInit object at a given node, if any */
+    getDestinationInit(gx: number, gy: number): DestinationInit | undefined {
+        return this.destinations.get(getCoordKey(gx, gy));
     }
 
     /** Returns if an Edge may be added between two Coords */
@@ -208,7 +256,7 @@ export class Level {
         // TODO: write to JSON (how does this handle maps?)
     }
 
-    render(draw: Draw, active: boolean, playerEdges?: Edges) {
+    render(draw: Draw, state: GameStates, playerEdges?: Edges) {
         // Render edges (each lands below the node)
         for (const [edgeKey, edge] of this.edges) {
             this.renderEdge(draw, edge, false);
@@ -228,14 +276,21 @@ export class Level {
             draw.sprite(sprite, image, px, py);
         }
 
-        if (!active) {
+        if (state !== "run") {
             // Render init objects
             for (const [coordKey, carrierInit] of this.carriers) {
-                renderCarrierInit(
+                renderCarrierInit(draw, carrierInit.gx, carrierInit.gy, carrierInit.heading);
+            }
+            for (const [coordKey, destinationInit] of this.destinations) {
+                renderDestinationInit(
                     draw,
-                    { x: carrierInit.gx, y: carrierInit.gy },
-                    carrierInit.heading,
+                    destinationInit.gx,
+                    destinationInit.gy,
+                    state === "edit",
                 );
+            }
+            for (const [coordKey, parcelInit] of this.parcels) {
+                renderParcelInit(draw, parcelInit.gx, parcelInit.gy, state === "edit");
             }
         }
     }

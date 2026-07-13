@@ -13,7 +13,7 @@ function main() {
     // Render
     engine.state.level.render(
         engine.core.draw,
-        engine.state.state === "run",
+        engine.state.state,
         engine.state.solveState?.placed,
     );
     engine.layout.render();

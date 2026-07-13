@@ -1,11 +1,11 @@
 import { VIEW_WIDTH } from "../constants";
 import { Engine } from "../engine";
 import { GameStates } from "../game/state";
-import { CarrierButton } from "./buttons/CarrierButton";
-import { DestinationButton } from "./buttons/DestinationButton";
+import { CarrierButton } from "./buttons/toggles/CarrierButton";
+import { DestinationButton } from "./buttons/toggles/DestinationButton";
 import { DoneButton } from "./buttons/DoneButton";
 import { EditButton } from "./buttons/EditButton";
-import { ParcelButton } from "./buttons/ParcelButton";
+import { ParcelButton } from "./buttons/toggles/ParcelButton";
 import { RunButton } from "./buttons/RunButton";
 import { StopButton } from "./buttons/StopButton";
 import { EdgeGrid } from "./edgegrid";

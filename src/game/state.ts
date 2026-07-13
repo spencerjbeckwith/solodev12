@@ -10,9 +10,7 @@ import { Destination } from "./entities/destination";
 import { Entity } from "./entities/entity";
 
 export interface EditState {
-    carrierToggle: boolean;
-    parcelToggle: boolean;
-    destinationToggle: boolean;
+    entityToggle: "carrier" | "destination" | "parcel" | null;
 }
 
 export interface SolveState {
@@ -145,9 +143,7 @@ export class GameState {
 
     newEditState(): EditState {
         return {
-            carrierToggle: false,
-            parcelToggle: false,
-            destinationToggle: false,
+            entityToggle: null,
         };
     }
 

@@ -17,12 +17,22 @@ export class NodeButton extends Button {
 
     onClick() {
         let result: boolean | null = null;
-        // If carrierToggle is on, create or destroy a Carrier at this node
-        if (this.engine.state.editState.carrierToggle) {
-            result = this.engine.state.level.toggleCarrier(this.gx, this.gy);
-        } else {
-            // No toggle is on, modify nodes
-            result = this.engine.state.level.toggleNode(this.gx, this.gy);
+
+        // Toggle the appropriate entity per edit state
+        switch (this.engine.state.editState.entityToggle) {
+            case "carrier":
+                result = this.engine.state.level.toggleCarrier(this.gx, this.gy);
+                break;
+            case "parcel":
+                result = this.engine.state.level.toggleParcel(this.gx, this.gy);
+                break;
+            case "destination":
+                result = this.engine.state.level.toggleDestination(this.gx, this.gy);
+                break;
+            default:
+                // No other toggle is on, so toggle nodes
+                result = this.engine.state.level.toggleNode(this.gx, this.gy);
+                break;
         }
 
         if (result) {

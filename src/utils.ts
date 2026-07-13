@@ -86,9 +86,16 @@ export function headingToVector(heading: number): Coord {
 }
 
 /** Returns a unique key for a Coord */
-export function getCoordKey(c: Coord): string {
-    return `${c.x},${c.y}`;
+function getCoordKey(c: Coord): string;
+function getCoordKey(x: number, y: number): string;
+function getCoordKey(c: Coord | number, y?: number): string {
+    if (typeof c === "object") {
+        return `${c.x},${c.y}`;
+    }
+    return `${c},${y}`;
 }
+
+export { getCoordKey };
 
 /** Returns a unique key for an Edge, regardless of the order of its defined Coords */
 export function getEdgeKey(edge: Edge): string {
