@@ -1,12 +1,8 @@
-import {
-    Adjacency,
-    getCoordKey,
-    Edges,
-    Nodes,
-    Edge,
-    getEdgeKey,
-    EdgePlacementResult,
-} from "../types";
+import { Draw } from "supersprite";
+import { TICK_FRAMES, WAIT_FRAMES } from "../constants";
+import { Edges, Nodes, Edge, EdgePlacementResult } from "../types";
+import { getCoordKey, getEdgeKey, toVector } from "../utils";
+import { Adjacency } from "./adjacency";
 import { Carrier } from "./carrier";
 import { Level } from "./level";
 import { Parcel } from "./parcel";
@@ -22,8 +18,9 @@ export interface SolveState {
 
 export interface RunState {
     tick: number;
+    framesLeft: number;
     nodes: Nodes;
-    adjacency: Adjacency; // Tracks what nodes are accessible from other nodes
+    adjacency: Adjacency;
     carriers: Carrier[];
     parcel: Parcel;
 }
@@ -81,9 +78,54 @@ export class GameState {
         }
     }
 
-    tick(runState: RunState): RunState {
-        // TODO
-        return runState;
+    frame() {
+        if (this.state === "run") {
+            const s = this.runState!;
+            const elapsed = Math.min(TICK_FRAMES, TICK_FRAMES - s.framesLeft);
+            s.framesLeft--;
+
+            // Call frame on all Carriers
+            for (const carrier of s.carriers) {
+                carrier.frame(elapsed);
+            }
+
+            if (s.framesLeft === 0) {
+                // Tick is over
+                this.endTick(s);
+            }
+
+            if (s.framesLeft === -WAIT_FRAMES) {
+                // Start new tick after waiting
+                this.tick(s);
+            }
+        }
+    }
+
+    tick(s: RunState) {
+        s.tick++;
+        s.framesLeft = TICK_FRAMES;
+        for (const carrier of s.carriers) {
+            carrier.tick(s);
+        }
+        return s;
+    }
+
+    endTick(s: RunState) {
+        for (const carrier of s.carriers) {
+            carrier.endTick(s);
+        }
+
+        // TODO check for handoff here
+
+        return s;
+    }
+
+    render(draw: Draw) {
+        if (this.state === "run") {
+            for (const carrier of this.runState!.carriers) {
+                carrier.render(draw);
+            }
+        }
     }
 
     newEditState(): EditState {
@@ -105,33 +147,17 @@ export class GameState {
         this.level.carriers.forEach((init) => {
             carriers.push(new Carrier(init));
         });
+        // Create adjacency
+        const allEdges = new Map([...this.level.edges, ...this.solveState!.placed]);
+        const adj = new Adjacency(allEdges);
         return {
             tick: 0,
+            framesLeft: 0, // Wait until first tick() call to start
             nodes: this.level.nodes,
-            adjacency: this.buildAdjacency(this.level.edges, this.solveState!.placed),
+            adjacency: adj,
             carriers: carriers,
             parcel: new Parcel(this.level.parcel),
         };
-    }
-
-    buildAdjacency(levelEdges: Edges, placedEdges: Edges): Adjacency {
-        const allEdges = new Map([...levelEdges, ...placedEdges]);
-        const adj: Adjacency = new Map();
-        allEdges.forEach((edge) => {
-            for (const coord of edge) {
-                const coordKey = getCoordKey(coord);
-                const otherCoord = getCoordKey(edge[0]) === coordKey ? edge[1] : edge[0];
-                const coordList = adj.get(coordKey);
-                if (coordList) {
-                    // Node is already on the map, append to it
-                    coordList.push(otherCoord);
-                } else {
-                    // First time we're adding this node to the map
-                    adj.set(coordKey, [otherCoord]);
-                }
-            }
-        });
-        return adj;
     }
 
     isValidEdge(edge: Edge): boolean {

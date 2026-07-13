@@ -22,7 +22,7 @@ npm test
 
 ## Tasks
 
-- [ ] Carrier sprites
+- [x] Carrier sprites
 - [ ] Parcel/Destination sprites
 - [ ] Implement Carrier
 - [ ] Implement Destination

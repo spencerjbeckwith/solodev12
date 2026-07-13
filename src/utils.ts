@@ -1,5 +1,5 @@
 import { GRID_OFFSET_X, GRID_OFFSET_Y, GRID_SIZE, GRID_SIZE_H, GRID_SIZE_W } from "./constants";
-import { Coord } from "./types";
+import { Coord, Edge, Edges, Nodes } from "./types";
 
 /** Pixel X of the center of grid column `gx` */
 export function gridToPixelX(gx: number): number {
@@ -59,4 +59,59 @@ export function vectorToHeading(x: number, y: number): number {
     if (x === 0 && y > 0) return 6;
     if (x > 0 && y > 0) return 7;
     return 6; // Down
+}
+
+/** Inverse of `vectorToHeading`: the unit vector for a heading (0-7, clockwise from right) */
+export function headingToVector(heading: number): Coord {
+    switch (heading) {
+        case 0:
+            return { x: 1, y: 0 };
+        case 1:
+            return { x: 1, y: -1 };
+        case 2:
+            return { x: 0, y: -1 };
+        case 3:
+            return { x: -1, y: -1 };
+        case 4:
+            return { x: -1, y: 0 };
+        case 5:
+            return { x: -1, y: 1 };
+        case 6:
+            return { x: 0, y: 1 };
+        case 7:
+            return { x: 1, y: 1 };
+        default:
+            return { x: 0, y: 1 };
+    }
+}
+
+/** Returns a unique key for a Coord */
+export function getCoordKey(c: Coord): string {
+    return `${c.x},${c.y}`;
+}
+
+/** Returns a unique key for an Edge, regardless of the order of its defined Coords */
+export function getEdgeKey(edge: Edge): string {
+    return edge
+        .map((e) => getCoordKey(e))
+        .sort()
+        .join("|");
+}
+
+/** Transforms a list of individual Coord objects (nodes) into a Nodes map */
+export function toNodes(nodes: Coord[]): Nodes {
+    return new Map(nodes.map((n) => [getCoordKey(n), n]));
+}
+
+/** Transforms a list of individual Edge objects to an Edges map */
+export function toEdges(edges: Edge[]): Edges {
+    return new Map(edges.map((e) => [getEdgeKey(e), e]));
+}
+
+/** Transforms an Edge to a vector (one relative Coord instead of two) */
+export function toVector(edge: Edge): Coord {
+    return {
+        x: edge[1].x - edge[0].x,
+        y: edge[1].y - edge[0].y,
+    };
 }

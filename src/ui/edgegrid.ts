@@ -1,8 +1,16 @@
 import { Color } from "supersprite";
 import { GRID_OFFSET_X, GRID_OFFSET_Y, GRID_SIZE, GRID_SIZE_H, GRID_SIZE_W } from "../constants";
 import { Engine } from "../engine";
-import { Coord, Edge, getCoordKey } from "../types";
-import { gridToPixelX, gridToPixelY, pixelToGridX, pixelToGridY, vectorToHeading } from "../utils";
+import { Coord, Edge } from "../types";
+import {
+    getCoordKey,
+    gridToPixelX,
+    gridToPixelY,
+    pixelToGridX,
+    pixelToGridY,
+    toVector,
+    vectorToHeading,
+} from "../utils";
 import { UIElement } from "./element";
 
 export class EdgeGrid extends UIElement {
@@ -45,14 +53,17 @@ export class EdgeGrid extends UIElement {
                 if (this.from !== null && gx !== null && gy !== null) {
                     const to: Coord = { x: gx, y: gy };
                     if (getCoordKey(this.from) !== getCoordKey(to)) {
-                        if (this.engine.state.editState.carrierToggle) {
+                        if (
+                            this.engine.state.state === "edit" &&
+                            this.engine.state.editState.carrierToggle
+                        ) {
                             // Carrier toggle is on, attempt to change a Carrier's heading
-                            const ci = this.engine.state.level.getCarrierInit(gx, gy);
+                            const ci = this.engine.state.level.getCarrierInit(
+                                this.from.x,
+                                this.from.y,
+                            );
                             if (ci) {
-                                const vector = {
-                                    x: to.x - this.from.x,
-                                    y: to.y - this.from.y,
-                                };
+                                const vector = toVector([this.from, { x: gx, y: gy }]);
                                 ci.heading = vectorToHeading(vector.x, vector.y);
                             }
                         } else {

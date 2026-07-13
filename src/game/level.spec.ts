@@ -1,7 +1,7 @@
 import { describe, it } from "mocha";
 import expect from "expect";
 import { Level } from "./level";
-import { getCoordKey, getEdgeKey } from "../types";
+import { getCoordKey, getEdgeKey } from "../utils";
 
 describe("Level", () => {
     it("knows its nodes", () => {

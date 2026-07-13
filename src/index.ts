@@ -8,10 +8,16 @@ function main() {
 
     // Frame logic
     engine.layout.frame();
+    engine.state.frame();
 
     // Render
-    engine.state.level.render(engine.core.draw, engine.state.solveState?.placed);
+    engine.state.level.render(
+        engine.core.draw,
+        engine.state.state === "run",
+        engine.state.solveState?.placed,
+    );
     engine.layout.render();
+    engine.state.render(engine.core.draw);
 
     engine.core.endRender();
     engine.input.update();

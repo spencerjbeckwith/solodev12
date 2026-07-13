@@ -1,9 +1,9 @@
 import { Draw } from "supersprite";
-import { Edge, EdgePlacementResult, Edges, getCoordKey, getEdgeKey, Nodes } from "../types";
-import { CarrierInit } from "./carrier";
+import { Edge, EdgePlacementResult, Edges, Nodes } from "../types";
+import { CarrierInit, renderCarrierInit } from "./carrier";
 import { ParcelInit } from "./parcel";
 import spr from "../sprites.json";
-import { gridToPixelX, gridToPixelY } from "../utils";
+import { getCoordKey, getEdgeKey, gridToPixelX, gridToPixelY } from "../utils";
 
 /** Immutable starting state of a playable level */
 export interface LevelDefinition {
@@ -57,6 +57,11 @@ export class Level {
                 }
             }
 
+            // Any Carrier starting on this node should be deleted
+            if (this.carriers.has(coordKey)) {
+                this.carriers.delete(coordKey);
+            }
+
             return false;
         } else {
             this.nodes.set(coordKey, coord);
@@ -74,7 +79,7 @@ export class Level {
         } else {
             this.carriers.set(coordKey, {
                 node: coord,
-                heading: 0,
+                heading: 6,
                 hasParcel: false,
             });
 
@@ -190,7 +195,7 @@ export class Level {
         // TODO: write to JSON (how does this handle maps?)
     }
 
-    render(draw: Draw, playerEdges?: Edges) {
+    render(draw: Draw, active: boolean, playerEdges?: Edges) {
         // Render edges (each lands below the node)
         for (const [edgeKey, edge] of this.edges) {
             this.renderEdge(draw, edge, false);
@@ -208,6 +213,13 @@ export class Level {
             const py = gridToPixelY(coord.y) - sprite.height / 2;
             const image = (coord.x + coord.y) % sprite.images.length;
             draw.sprite(sprite, image, px, py);
+        }
+
+        if (!active) {
+            // Render init objects
+            for (const [coordKey, carrierInit] of this.carriers) {
+                renderCarrierInit(draw, carrierInit.node, carrierInit.heading);
+            }
         }
     }
 
