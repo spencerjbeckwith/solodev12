@@ -1,4 +1,4 @@
-import { VIEW_WIDTH } from "../constants";
+import { VIEW_HEIGHT, VIEW_WIDTH } from "../constants";
 import { Engine } from "../engine";
 import { GameStates } from "../game/state";
 import { CarrierButton } from "./buttons/toggles/CarrierButton";
@@ -17,6 +17,10 @@ import { NextButton } from "./buttons/NextButton";
 import { SaveButton } from "./buttons/SaveButton";
 import { LoadButton } from "./buttons/LoadButton";
 import { TrashButton } from "./buttons/TrashButton";
+import { BudgetUpButton } from "./buttons/BudgetUpButton";
+import { BudgetDownButton } from "./buttons/BudgetDownButton";
+import { NoteButton } from "./buttons/NoteButton";
+import { NoteText } from "./text/NoteText";
 
 export class Layout {
     engine: Engine;
@@ -40,6 +44,14 @@ export class Layout {
                 new SaveButton(engine, canvas),
                 new LoadButton(engine, canvas),
                 new TrashButton(engine, canvas),
+                new TextElement(engine, VIEW_WIDTH - 16, 15, (state) => `${state.level.budget}`, {
+                    hAlign: "right",
+                    vAlign: "middle",
+                }),
+                new BudgetUpButton(engine, canvas),
+                new BudgetDownButton(engine, canvas),
+                new NoteButton(engine, canvas),
+                new NoteText(engine),
             ],
             solve: [
                 new RunButton(engine, canvas),
@@ -48,17 +60,17 @@ export class Layout {
                     engine,
                     VIEW_WIDTH - 4,
                     4,
-                    (state) => {
-                        return `Routes: ${state.solveState!.remaining}`;
-                    },
+                    (state) => `Routes: ${state.solveState!.remaining}`,
                     { hAlign: "right", vAlign: "top" },
                 ),
                 new EdgeGrid(engine, canvas),
+                new NoteText(engine),
             ],
             run: [
                 new StopButton(engine, canvas),
                 new WinText(engine),
                 new NextButton(engine, canvas),
+                new NoteText(engine),
             ],
         };
     }

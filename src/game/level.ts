@@ -70,9 +70,15 @@ export class Level {
                 }
             }
 
-            // Any Carrier starting on this node should be deleted
+            // Any Carrier, Parcel, or Destination starting on this node should be deleted
             if (this.carriers.has(coordKey)) {
                 this.carriers.delete(coordKey);
+            }
+            if (this.parcels.has(coordKey)) {
+                this.parcels.delete(coordKey);
+            }
+            if (this.destinations.has(coordKey)) {
+                this.destinations.delete(coordKey);
             }
 
             return false;

@@ -40,6 +40,11 @@ export class Carrier extends Entity {
     parcels: Parcel[];
     // TODO: rule
 
+    // The node this Carrier started the current tick on, before it moved.
+    // Used to detect two Carriers crossing paths on the same edge.
+    tickOriginGx: number;
+    tickOriginGy: number;
+
     // Animation and movement
     mirror: boolean;
     vector: Coord | null;
@@ -48,6 +53,8 @@ export class Carrier extends Entity {
         super(init);
         this.heading = init.heading;
         this.parcels = [];
+        this.tickOriginGx = this.gx;
+        this.tickOriginGy = this.gy;
 
         this.sprite = carrierSprites[this.heading].spr;
         this.mirror = carrierSprites[this.heading].mirror;
@@ -62,8 +69,10 @@ export class Carrier extends Entity {
 
     tick(e: Engine, s: RunState) {
         const coordKey = getCoordKey(this.gx, this.gy);
-        this.attemptPickup(e, s);
-        this.attemptDelivery(e, s);
+
+        // Remember where we started this tick to resolve handoffs
+        this.tickOriginGx = this.gx;
+        this.tickOriginGy = this.gy;
 
         // Decide where to go, attempt to move
         // TODO
@@ -84,8 +93,6 @@ export class Carrier extends Entity {
         this.py = this.gridToPixelY(this.gy);
         this.vector = null;
         this.spriteImage = 0;
-        this.attemptPickup(e, s);
-        this.attemptDelivery(e, s);
     }
 
     /** Starts a movement for this Carrier for a tick */
@@ -107,16 +114,6 @@ export class Carrier extends Entity {
         this.gy += vector.y;
     }
 
-    /** Attempt to pick up any Parcels at our position */
-    attemptPickup(e: Engine, s: RunState) {
-        const coordKey = getCoordKey(this.gx, this.gy);
-        if (s.parcels.has(coordKey)) {
-            // Found one!
-            const p = s.parcels.get(coordKey);
-            this.pickup(e, s, p!);
-        }
-    }
-
     /** Execute a pickup of a Parcel */
     pickup(e: Engine, s: RunState, parcel: Parcel) {
         parcel.carrier = this;
@@ -130,25 +127,24 @@ export class Carrier extends Entity {
         parcel.updateOffset();
     }
 
-    /** Attempt to deliver any Parcels to Destinations at our position */
-    attemptDelivery(e: Engine, s: RunState) {
-        if (this.parcels.length > 0) {
-            const coordKey = getCoordKey(this.gx, this.gy);
-            if (s.destinations.has(coordKey)) {
-                const destination = s.destinations.get(coordKey)!;
-                if (destination.spriteImage === 0) {
-                    // Not already-delivered
-                    const parcel = this.parcels.pop()!;
-                    parcel.active = false;
-                    this.deliver(e, s, destination);
-                }
-            }
-        }
+    /** Execute a delivery of our most recent Parcel */
+    deliver(e: Engine, s: RunState, destination: Destination) {
+        const parcel = this.parcels.pop()!;
+        parcel.active = false;
+        destination.delivery(e, s);
     }
 
-    /** Execute a delivery of a Parcel */
-    deliver(e: Engine, s: RunState, destination: Destination) {
-        destination.delivery(e, s);
+    /** Handoff a parcel to another Carrier */
+    handoff(e: Engine, s: RunState, to: Carrier) {
+        if (this.parcels.length > 0) {
+            e.snd.pickup.play();
+            const parcel = this.parcels.pop()!;
+            parcel.px = to.px;
+            parcel.py = to.py;
+            parcel.carrier = to;
+            to.parcels.push(parcel);
+            parcel.updateOffset();
+        }
     }
 
     frame(e: Engine, frame: number) {

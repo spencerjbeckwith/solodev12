@@ -40,6 +40,9 @@ export abstract class Entity {
 
     tick(e: Engine, s: RunState): void {}
 
+    /** Runs halfway through the tick, when moving Carriers are mid-edge */
+    midTick(e: Engine, s: RunState): void {}
+
     endTick(e: Engine, s: RunState): void {}
 
     frame(e: Engine, elapsed: number): void {}

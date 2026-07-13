@@ -97,6 +97,11 @@ export class GameState {
                 }
             }
 
+            if (s.framesLeft === Math.floor(TICK_FRAMES / 2)) {
+                // Halfway through the tick - moving Carriers are mid-edge
+                this.midTick(e, s);
+            }
+
             if (s.framesLeft === 0) {
                 // Tick is over
                 this.endTick(e, s);
@@ -112,26 +117,95 @@ export class GameState {
     tick(e: Engine, s: RunState) {
         s.tick++;
         s.framesLeft = TICK_FRAMES;
+
+        // Resolve pickups/deliveries at each Carrier's start node, before moving
+        const atStart = this.groupCarriers(s);
+        this.resolvePickups(e, s, atStart);
+        this.resolveDeliveries(e, s, atStart);
+
         for (const entity of s.entities) {
             if (entity.active) {
                 entity.tick(e, s);
             }
         }
 
-        // Update lookup map for Carriers
-        s.carriers.clear();
+        // Rebuild the lookup map from post-move positions
+        s.carriers = this.groupCarriers(s);
+        return s;
+    }
+
+    /** Groups all Carriers by the node they currently occupy */
+    groupCarriers(s: RunState): Map<string, Carrier[]> {
+        const groups: Map<string, Carrier[]> = new Map();
         for (const c of s.entities) {
             if (c instanceof Carrier) {
-                const coordKey = getCoordKey(c.gx, c.gy);
-                if (s.carriers.has(coordKey)) {
-                    // Key already exists, meaning we have multiple Carriers on one node
-                    const list = s.carriers.get(coordKey);
-                    list!.push(c);
+                const key = getCoordKey(c.gx, c.gy);
+                const list = groups.get(key);
+                if (list) {
+                    list.push(c);
                 } else {
-                    // Key doesn't exist (yet - there may still be multiple Carriers that wind up here)
-                    const list = [c];
-                    s.carriers.set(coordKey, list);
+                    groups.set(key, [c]);
                 }
+            }
+        }
+        return groups;
+    }
+
+    /** The Carrier with the fewest Parcels picks up any co-located Parcel; ties wait */
+    resolvePickups(e: Engine, s: RunState, groups: Map<string, Carrier[]>) {
+        for (const [coordKey, parcel] of s.parcels) {
+            const carriers = groups.get(coordKey);
+            if (!carriers) continue;
+            const taker = this.fewestParcels(carriers);
+            if (taker) {
+                taker.pickup(e, s, parcel);
+            }
+        }
+    }
+
+    /** The Carrier with the most Parcels delivers to a co-located Destination; ties wait */
+    resolveDeliveries(e: Engine, s: RunState, groups: Map<string, Carrier[]>) {
+        for (const [coordKey, destination] of s.destinations) {
+            if (destination.spriteImage !== 0) continue; // Already delivered
+            const carriers = groups.get(coordKey);
+            if (!carriers) continue;
+            const deliverer = this.mostParcels(carriers.filter((c) => c.parcels.length > 0));
+            if (deliverer) {
+                deliverer.deliver(e, s, destination);
+            }
+        }
+    }
+
+    midTick(e: Engine, s: RunState) {
+        for (const entity of s.entities) {
+            if (entity.active) {
+                entity.midTick(e, s);
+            }
+        }
+
+        // Handoffs between Carriers crossing paths on the same edge
+        const crossings: Map<string, Carrier[]> = new Map();
+        for (const c of s.entities) {
+            if (c instanceof Carrier) {
+                if (c.tickOriginGx === c.gx && c.tickOriginGy === c.gy) {
+                    continue; // Didn't move this tick
+                }
+                const key = getEdgeKey([
+                    { x: c.tickOriginGx, y: c.tickOriginGy },
+                    { x: c.gx, y: c.gy },
+                ]);
+                const list = crossings.get(key);
+                if (list) {
+                    list.push(c);
+                } else {
+                    crossings.set(key, [c]);
+                }
+            }
+        }
+        for (const [, carriers] of crossings) {
+            const pair = this.resolveHandoff(carriers);
+            if (pair) {
+                pair[0].handoff(e, s, pair[1]);
             }
         }
 
@@ -145,13 +219,66 @@ export class GameState {
             }
         }
 
-        // TODO check for handoffs here
+        // Carriers have arrived; resolve pickups/deliveries then node handoffs
+        this.resolvePickups(e, s, s.carriers);
+        this.resolveDeliveries(e, s, s.carriers);
+
+        for (const [, carriers] of s.carriers) {
+            const pair = this.resolveHandoff(carriers);
+            if (pair) {
+                pair[0].handoff(e, s, pair[1]);
+            }
+        }
 
         if (s.remainingDeliveries === 0) {
             console.log("Level complete!");
         }
 
         return s;
+    }
+
+    /**
+     * Given co-located Carriers, returns the [giver, receiver] pair for a handoff:
+     * the Carrier with the most Parcels gives to the one with the fewest. Returns
+     * null when either end is tied (nothing happens).
+     */
+    resolveHandoff(carriers: Carrier[]): [Carrier, Carrier] | null {
+        const most = this.mostParcels(carriers);
+        const fewest = this.fewestParcels(carriers);
+        if (!most || !fewest || most === fewest) {
+            return null;
+        }
+        return [most, fewest];
+    }
+
+    /** The single Carrier holding the most Parcels, or null if tied (or empty) */
+    mostParcels(carriers: Carrier[]): Carrier | null {
+        let most: Carrier | null = null;
+        let tied = false;
+        for (const c of carriers) {
+            if (!most || c.parcels.length > most.parcels.length) {
+                most = c;
+                tied = false;
+            } else if (c.parcels.length === most.parcels.length) {
+                tied = true;
+            }
+        }
+        return tied ? null : most;
+    }
+
+    /** The single Carrier holding the fewest Parcels, or null if tied (or empty) */
+    fewestParcels(carriers: Carrier[]): Carrier | null {
+        let fewest: Carrier | null = null;
+        let tied = false;
+        for (const c of carriers) {
+            if (!fewest || c.parcels.length < fewest.parcels.length) {
+                fewest = c;
+                tied = false;
+            } else if (c.parcels.length === fewest.parcels.length) {
+                tied = true;
+            }
+        }
+        return tied ? null : fewest;
     }
 
     render(e: Engine) {
