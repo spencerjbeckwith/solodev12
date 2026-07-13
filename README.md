@@ -19,3 +19,23 @@ Then open [localhost](http://localhost:3000) in your browser.
 ```bash
 npm test
 ```
+
+## Tasks
+
+- [ ] Carrier sprites
+- [ ] Parcel/Destination sprites
+- [ ] Implement Carrier
+- [ ] Implement Destination
+- [ ] Carrier tick logic/base Carrier types
+- [ ] Level completion
+- [ ] Save/Load Level
+- [ ] Design levels
+- [ ] Itch page and deploy
+
+### Stretch Goals
+
+- [ ] Background
+- [ ] Music
+- [ ] Title Screen
+- [ ] Tutorial
+- [ ] Completion Screen

@@ -2,6 +2,7 @@ import { Color } from "supersprite";
 import { GRID_OFFSET_X, GRID_OFFSET_Y, GRID_SIZE, GRID_SIZE_H, GRID_SIZE_W } from "../constants";
 import { Engine } from "../engine";
 import { Coord, Edge, getCoordKey } from "../types";
+import { gridToPixelX, gridToPixelY, pixelToGridX, pixelToGridY, vectorToHeading } from "../utils";
 import { UIElement } from "./element";
 
 export class EdgeGrid extends UIElement {
@@ -28,10 +29,8 @@ export class EdgeGrid extends UIElement {
     }
 
     frame() {
-        // TODO: make sure to put in the budget
-
-        const gx = this.mouseToGridX(this.edgeDragMargin);
-        const gy = this.mouseToGridY(this.edgeDragMargin);
+        const gx = pixelToGridX(this.engine.input.mouse.x, this.edgeDragMargin);
+        const gy = pixelToGridY(this.engine.input.mouse.y, this.edgeDragMargin);
         if (!this.dragging) {
             // Listen for clicks within the nodes
             if (this.engine.input.mouse.pressed.mouseLeft) {
@@ -46,22 +45,31 @@ export class EdgeGrid extends UIElement {
                 if (this.from !== null && gx !== null && gy !== null) {
                     const to: Coord = { x: gx, y: gy };
                     if (getCoordKey(this.from) !== getCoordKey(to)) {
-                        // Released on another node, see if we can connect to it
-                        const edge: Edge = [this.from, to];
-                        if (this.engine.state.isValidEdge(edge)) {
-                            switch (this.engine.state.toggleEdge(edge)) {
-                                case "placed":
-                                    this.engine.snd.place.play();
-                                    break;
-                                case "removed":
-                                    this.engine.snd.break.play();
-                                    break;
-                                case "blocked":
-                                    this.engine.snd.no.play();
-                                    break;
+                        if (this.engine.state.editState.carrierToggle) {
+                            // Carrier toggle is on, attempt to change a Carrier's heading
+                            const ci = this.engine.state.level.getCarrierInit(gx, gy);
+                            if (ci) {
+                                const vector = {
+                                    x: to.x - this.from.x,
+                                    y: to.y - this.from.y,
+                                };
+                                ci.heading = vectorToHeading(vector.x, vector.y);
                             }
                         } else {
-                            this.engine.snd.no.play();
+                            // Released on another node, see if we can connect to it
+                            const edge: Edge = [this.from, to];
+                            if (this.engine.state.isValidEdge(edge)) {
+                                switch (this.engine.state.toggleEdge(edge)) {
+                                    case "placed":
+                                        this.engine.snd.place.play();
+                                        break;
+                                    case "removed":
+                                        this.engine.snd.break.play();
+                                        break;
+                                    default:
+                                        break;
+                                }
+                            }
                         }
                     }
                 }
@@ -94,8 +102,8 @@ export class EdgeGrid extends UIElement {
     }
 
     render() {
-        const gx = this.mouseToGridX(this.edgeDragMargin);
-        const gy = this.mouseToGridY(this.edgeDragMargin);
+        const gx = pixelToGridX(this.engine.input.mouse.x, this.edgeDragMargin);
+        const gy = pixelToGridY(this.engine.input.mouse.y, this.edgeDragMargin);
         if (!this.dragging) {
             if (gx !== null && gy !== null) {
                 // Mouse is within a node's clickable region, show an indicator
@@ -115,8 +123,8 @@ export class EdgeGrid extends UIElement {
             if (this.from && this.canvas) {
                 this.canvas.style.cursor = "grabbing";
                 this.engine.core.draw.line(
-                    this.gridToMouseX(this.from.x),
-                    this.gridToMouseY(this.from.y),
+                    gridToPixelX(this.from.x),
+                    gridToPixelY(this.from.y),
                     this.engine.input.mouse.x,
                     this.engine.input.mouse.y,
                     this.dragColor,
@@ -126,55 +134,14 @@ export class EdgeGrid extends UIElement {
                 const e: Edge = [this.from, { x: gx, y: gy }];
                 if (this.engine.state.isValidEdge(e)) {
                     this.engine.core.draw.line(
-                        this.gridToMouseX(this.from.x),
-                        this.gridToMouseY(this.from.y),
-                        this.gridToMouseX(gx),
-                        this.gridToMouseY(gy),
+                        gridToPixelX(this.from.x),
+                        gridToPixelY(this.from.y),
+                        gridToPixelX(gx),
+                        gridToPixelY(gy),
                         this.confirmColor,
                     );
                 }
             }
         }
-    }
-
-    mouseToGridX(margin = 0): number | null {
-        let mx = this.engine.input.mouse.x;
-        return this.gridCellDimension(margin, mx, GRID_OFFSET_X, GRID_SIZE_W);
-    }
-
-    mouseToGridY(margin = 0): number | null {
-        const my = this.engine.input.mouse.y;
-        return this.gridCellDimension(margin, my, GRID_OFFSET_Y, GRID_SIZE_H);
-    }
-
-    gridToMouseX(gx: number): number {
-        return GRID_OFFSET_X + gx * GRID_SIZE + GRID_SIZE / 2;
-    }
-
-    gridToMouseY(gy: number): number {
-        return GRID_OFFSET_Y + gy * GRID_SIZE + GRID_SIZE / 2;
-    }
-
-    private gridCellDimension(
-        margin: number,
-        value: number,
-        gridOffset: number,
-        dimensionSize: number,
-    ): number | null {
-        // Null if outside grid entirely
-        if (value < gridOffset || value > gridOffset + GRID_SIZE * dimensionSize) {
-            return null;
-        }
-        value -= gridOffset;
-
-        // Ensure our value is within the cell by the margin amount
-        const within = value % GRID_SIZE;
-        if (within < margin || within > GRID_SIZE - margin) {
-            return null;
-        }
-
-        // Convert to grid coordinate
-        value = Math.floor(value / GRID_SIZE);
-        return value;
     }
 }

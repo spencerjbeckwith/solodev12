@@ -1,22 +1,31 @@
 import { Button } from "./Button";
 import spr from "../../sprites.json";
-import { GRID_OFFSET_X, GRID_OFFSET_Y, GRID_SIZE } from "../../constants";
 import { Engine } from "../../engine";
+import { gridToPixelX, gridToPixelY } from "../../utils";
 
 export class NodeButton extends Button {
     gx: number;
     gy: number;
 
     constructor(engine: Engine, gx: number, gy: number, canvas?: HTMLCanvasElement) {
-        const realX = GRID_OFFSET_X + gx * GRID_SIZE + GRID_SIZE / 2 - spr.actions.width / 2;
-        const realY = GRID_OFFSET_Y + gy * GRID_SIZE + GRID_SIZE / 2 - spr.actions.height / 2;
+        const realX = gridToPixelX(gx) - spr.actions.width / 2;
+        const realY = gridToPixelY(gy) - spr.actions.height / 2;
         super(engine, spr.actions, realX, realY, canvas, true, 1);
         this.gx = gx;
         this.gy = gy;
     }
 
     onClick() {
-        if (this.engine.state.level.toggleNode(this.gx, this.gy)) {
+        let result: boolean | null = null;
+        // If carrierToggle is on, create or destroy a Carrier at this node
+        if (this.engine.state.editState.carrierToggle) {
+            result = this.engine.state.level.toggleCarrier(this.gx, this.gy);
+        } else {
+            // No toggle is on, modify nodes
+            result = this.engine.state.level.toggleNode(this.gx, this.gy);
+        }
+
+        if (result) {
             this.engine.snd.place.play();
         } else {
             this.engine.snd.break.play();

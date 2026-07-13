@@ -11,6 +11,10 @@ import { Carrier } from "./carrier";
 import { Level } from "./level";
 import { Parcel } from "./parcel";
 
+export interface EditState {
+    carrierToggle: boolean;
+}
+
 export interface SolveState {
     placed: Edges;
     remaining: number;
@@ -29,6 +33,7 @@ export type GameStates = "edit" | "solve" | "run";
 export class GameState {
     state: GameStates;
     level: Level;
+    editState: EditState;
     solveState: SolveState | null;
     runState: RunState | null;
     canEdit: boolean;
@@ -36,6 +41,7 @@ export class GameState {
     constructor(level: Level, startState: Exclude<GameStates, "run">, canEdit: boolean) {
         this.state = startState;
         this.level = level;
+        this.editState = this.newEditState();
         this.solveState = startState === "solve" || !canEdit ? this.newSolveState() : null;
         this.runState = null;
         this.canEdit = canEdit;
@@ -80,6 +86,12 @@ export class GameState {
         return runState;
     }
 
+    newEditState(): EditState {
+        return {
+            carrierToggle: false,
+        };
+    }
+
     newSolveState(): SolveState {
         return {
             placed: new Map(),
@@ -88,11 +100,16 @@ export class GameState {
     }
 
     newRunState(): RunState {
+        // Initialie Carriers into a list from the map
+        const carriers: Carrier[] = [];
+        this.level.carriers.forEach((init) => {
+            carriers.push(new Carrier(init));
+        });
         return {
             tick: 0,
             nodes: this.level.nodes,
             adjacency: this.buildAdjacency(this.level.edges, this.solveState!.placed),
-            carriers: this.level.carriers.map((init) => new Carrier(init)),
+            carriers: carriers,
             parcel: new Parcel(this.level.parcel),
         };
     }

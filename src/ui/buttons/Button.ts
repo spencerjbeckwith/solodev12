@@ -2,6 +2,7 @@ import { SoundEffect } from "supersound";
 import { Sprite } from "supersprite";
 import { UIElement } from "../element";
 import { Engine } from "../../engine";
+import spr from "../../sprites.json";
 
 export class Button extends UIElement {
     // Configurable per button
@@ -93,4 +94,40 @@ export class Button extends UIElement {
     }
 
     onClick() {}
+}
+
+export class ToggleButton extends Button {
+    toggled: boolean;
+
+    constructor(
+        engine: Engine,
+        sprite: Sprite,
+        x: number,
+        y: number,
+        toggled: boolean,
+        canvas?: HTMLCanvasElement,
+        visible?: boolean,
+        padding?: number,
+    ) {
+        super(engine, sprite, x, y, canvas, visible, padding);
+        this.toggled = toggled;
+    }
+
+    onClick() {
+        this.toggled = !this.toggled;
+        this.onToggle(this.toggled);
+    }
+
+    onToggle(toggled: boolean) {
+        // Override me
+    }
+
+    render() {
+        super.render();
+        if (this.toggled) {
+            const tx = this.x + (this.sprite.width - spr.check.width);
+            const ty = this.y + (this.sprite.height - spr.check.height);
+            this.engine.core.draw.sprite(spr.check, 0, tx, ty);
+        }
+    }
 }

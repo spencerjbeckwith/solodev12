@@ -1,6 +1,7 @@
 import { VIEW_WIDTH } from "../constants";
 import { Engine } from "../engine";
 import { GameStates } from "../game/state";
+import { CarrierButton } from "./buttons/CarrierButton";
 import { DoneButton } from "./buttons/DoneButton";
 import { EditButton } from "./buttons/EditButton";
 import { RunButton } from "./buttons/RunButton";
@@ -24,6 +25,7 @@ export class Layout {
         this.ui = {
             edit: [
                 new DoneButton(engine, canvas),
+                new CarrierButton(engine, canvas),
                 new NodeGrid(engine, canvas),
                 new EdgeGrid(engine, canvas),
             ],

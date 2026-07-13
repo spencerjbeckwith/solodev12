@@ -3,7 +3,7 @@ import { Edge, EdgePlacementResult, Edges, getCoordKey, getEdgeKey, Nodes } from
 import { CarrierInit } from "./carrier";
 import { ParcelInit } from "./parcel";
 import spr from "../sprites.json";
-import { GRID_OFFSET_X, GRID_OFFSET_Y, GRID_SIZE } from "../constants";
+import { gridToPixelX, gridToPixelY } from "../utils";
 
 /** Immutable starting state of a playable level */
 export interface LevelDefinition {
@@ -19,7 +19,7 @@ export class Level {
     nodes: Nodes;
     edges: Edges;
     budget: number;
-    carriers: CarrierInit[];
+    carriers: Map<string, CarrierInit>; // Indexed by coordKey
     parcel: ParcelInit;
 
     constructor(definition?: LevelDefinition) {
@@ -29,8 +29,13 @@ export class Level {
         this.nodes = definition.nodes;
         this.edges = definition.edges;
         this.budget = definition.budget;
-        this.carriers = definition.carriers;
         this.parcel = definition.parcel;
+
+        // Load a CarrierInit for each one in the definition
+        this.carriers = new Map();
+        for (const init of definition.carriers) {
+            this.carriers.set(getCoordKey(init.node), init);
+        }
     }
 
     /** Returns if the given grid X and Y coordinates are on a node in the level */
@@ -44,11 +49,48 @@ export class Level {
         const coordKey = getCoordKey(coord);
         if (this.nodes.has(coordKey)) {
             this.nodes.delete(coordKey);
+
+            // Any edge connected to this node should also be deleted
+            for (const [edgeKey, edge] of this.edges) {
+                if (edgeKey.includes(coordKey)) {
+                    this.edges.delete(edgeKey);
+                }
+            }
+
             return false;
         } else {
             this.nodes.set(coordKey, coord);
             return true;
         }
+    }
+
+    /** Toggles a carrier at the given X and Y coordinates */
+    toggleCarrier(gx: number, gy: number): boolean {
+        const coord = { x: gx, y: gy };
+        const coordKey = getCoordKey(coord);
+        if (this.carriers.has(coordKey)) {
+            this.carriers.delete(coordKey);
+            return false;
+        } else {
+            this.carriers.set(coordKey, {
+                node: coord,
+                heading: 0,
+                hasParcel: false,
+            });
+
+            // If no node at this location, create one
+            if (!this.nodes.has(coordKey)) {
+                this.nodes.set(coordKey, coord);
+            }
+            return true;
+        }
+    }
+
+    /** Returns a CarrierInit object at a given position */
+    getCarrierInit(gx: number, gy: number): CarrierInit | undefined {
+        const coord = { x: gx, y: gy };
+        const coordKey = getCoordKey(coord);
+        return this.carriers.get(coordKey);
     }
 
     /** Returns if an Edge may be added between two Coords */
@@ -162,8 +204,8 @@ export class Level {
         // Render nodes
         for (const [coordKey, coord] of this.nodes) {
             const sprite = spr.node;
-            const px = GRID_OFFSET_X + coord.x * GRID_SIZE + GRID_SIZE / 2 - sprite.width / 2;
-            const py = GRID_OFFSET_Y + coord.y * GRID_SIZE + GRID_SIZE / 2 - sprite.height / 2;
+            const px = gridToPixelX(coord.x) - sprite.width / 2;
+            const py = gridToPixelY(coord.y) - sprite.height / 2;
             const image = (coord.x + coord.y) % sprite.images.length;
             draw.sprite(sprite, image, px, py);
         }
@@ -192,8 +234,8 @@ export class Level {
         // Anchor from the center of the top-left node the edge touches (min x, min y).
         const minX = Math.min(edge[0].x, edge[1].x);
         const minY = Math.min(edge[0].y, edge[1].y);
-        const cx = GRID_OFFSET_X + minX * GRID_SIZE + GRID_SIZE / 2;
-        const cy = GRID_OFFSET_Y + minY * GRID_SIZE + GRID_SIZE / 2;
+        const cx = gridToPixelX(minX);
+        const cy = gridToPixelY(minY);
 
         let x: number;
         let y: number;
