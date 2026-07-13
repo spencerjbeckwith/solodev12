@@ -1,5 +1,5 @@
 import { TICK_FRAMES, WAIT_FRAMES } from "../constants";
-import { Edges, Nodes, Edge, EdgePlacementResult } from "../types";
+import { Edges, Nodes, Edge, EdgePlacementResult, Coord } from "../types";
 import { getCoordKey, getEdgeKey } from "../utils";
 import { Adjacency } from "./adjacency";
 import { Carrier } from "./entities/carrier";
@@ -39,6 +39,7 @@ export class GameState {
     solveState: SolveState | null;
     runState: RunState | null;
     canEdit: boolean;
+    highlightNode: Coord | null;
 
     constructor(level: Level, startState: Exclude<GameStates, "run">, canEdit: boolean) {
         this.state = startState;
@@ -47,6 +48,7 @@ export class GameState {
         this.solveState = startState === "solve" || !canEdit ? this.newSolveState() : null;
         this.runState = null;
         this.canEdit = canEdit;
+        this.highlightNode = null;
     }
 
     // Edit <---> Solve <---> Run

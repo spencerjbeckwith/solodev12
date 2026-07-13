@@ -14,6 +14,7 @@ function main() {
     engine.state.level.render(
         engine.core.draw,
         engine.state.state,
+        engine.state.highlightNode,
         engine.state.solveState?.placed,
     );
     engine.layout.render();

@@ -12,6 +12,7 @@ import {
     vectorToHeading,
 } from "../utils";
 import { UIElement } from "./element";
+import { ruleNames, rules } from "../game/rules";
 
 export class EdgeGrid extends UIElement {
     dragging: boolean;
@@ -39,11 +40,16 @@ export class EdgeGrid extends UIElement {
     frame() {
         const gx = pixelToGridX(this.engine.input.mouse.x, this.edgeDragMargin);
         const gy = pixelToGridY(this.engine.input.mouse.y, this.edgeDragMargin);
+        this.engine.state.highlightNode = null;
         if (!this.dragging) {
-            // Listen for clicks within the nodes
-            if (this.engine.input.mouse.pressed.mouseLeft) {
-                // Only allow clicks within nodes if we aren't in edit mdoe
-                if (gx !== null && gy !== null) {
+            if (gx !== null && gy !== null) {
+                // Indicate a highlight node
+                this.engine.state.highlightNode = { x: gx, y: gy };
+
+                // Listen for clicks within the nodes
+                if (this.engine.input.mouse.pressed.mouseLeft) {
+                    // Only allow clicks within nodes if we aren't in edit mdoe
+
                     if (
                         this.engine.state.state === "edit" ||
                         this.engine.state.level.hasNode(gx, gy)
@@ -129,6 +135,20 @@ export class EdgeGrid extends UIElement {
                         this.engine.state.level.hasNode(gx, gy)
                     ) {
                         this.canvas.style.cursor = "grab";
+                    }
+                }
+
+                if (this.engine.state.state === "edit") {
+                    const carrier = this.engine.state.level.getCarrierInit(gx, gy);
+                    if (carrier && this.engine.input.mouse.pressed.mouseRight) {
+                        // Right-click on a carrier toggles their rule
+                        let ruleIndex = ruleNames.indexOf(carrier.ruleName);
+                        ruleIndex++;
+                        if (ruleIndex >= ruleNames.length) {
+                            ruleIndex = 0;
+                        }
+                        carrier.ruleName = ruleNames[ruleIndex];
+                        this.engine.snd.click.play();
                     }
                 }
             }

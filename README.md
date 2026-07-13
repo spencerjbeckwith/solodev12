@@ -26,7 +26,7 @@ npm test
 - [x] Parcel/Destination sprites
 - [x] Implement Carrier
 - [x] Implement Destination
-- [ ] Carrier tick logic/base Carrier types
+- [x] Carrier tick logic/base Carrier types
 - [x] Level completion
 - [x] Save/Load Level
 - [ ] Design levels
@@ -40,3 +40,4 @@ npm test
 - [ ] Tutorial
 - [ ] Completion Screen
 - [ ] Cutesy Sounds
+- [ ] Indicator if multiple Carriers are on node

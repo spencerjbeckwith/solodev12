@@ -60,7 +60,7 @@ export class Layout {
                     engine,
                     VIEW_WIDTH - 4,
                     4,
-                    (state) => `Routes: ${state.solveState!.remaining}`,
+                    (state) => `Paths: ${state.solveState!.remaining}`,
                     { hAlign: "right", vAlign: "top" },
                 ),
                 new EdgeGrid(engine, canvas),

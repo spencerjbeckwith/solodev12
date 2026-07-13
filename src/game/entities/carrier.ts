@@ -1,19 +1,14 @@
-import { Draw, Sprite, Transform } from "supersprite";
+import { Colors, Draw, Sprite, Transform } from "supersprite";
 import { Coord } from "../../types";
 import spr from "../../sprites.json";
-import {
-    getCoordKey,
-    gridToPixelX,
-    gridToPixelY,
-    headingToVector,
-    vectorToHeading,
-} from "../../utils";
+import { getCoordKey, gridToPixelX, gridToPixelY, vectorToHeading } from "../../utils";
 import { CARRIER_STEPS_PER_TICK, GRID_SIZE, TICK_FRAMES } from "../../constants";
 import { RunState } from "../state";
 import { Entity, EntityInit } from "./entity";
 import { Parcel } from "./parcel";
 import { Engine } from "../../engine";
 import { Destination } from "./destination";
+import { RuleNames, rules } from "../rules";
 
 type CarrierSprite = { spr: Sprite; mirror: boolean };
 const carrierSprites: CarrierSprite[] = [
@@ -31,14 +26,14 @@ const mirrorTransform = new Transform().translate(0.5, 0).scale(-1, 1).translate
 /** Definition for the type/starting details of a Carrier */
 export interface CarrierInit extends EntityInit {
     heading: number;
-    // TODO: rule
+    ruleName: RuleNames;
 }
 
 /** Actual Carrier instance, active during run mode */
 export class Carrier extends Entity {
     heading: number;
     parcels: Parcel[];
-    // TODO: rule
+    ruleName: RuleNames;
 
     // The node this Carrier started the current tick on, before it moved.
     // Used to detect two Carriers crossing paths on the same edge.
@@ -55,6 +50,7 @@ export class Carrier extends Entity {
         this.parcels = [];
         this.tickOriginGx = this.gx;
         this.tickOriginGy = this.gy;
+        this.ruleName = init.ruleName;
 
         this.sprite = carrierSprites[this.heading].spr;
         this.mirror = carrierSprites[this.heading].mirror;
@@ -74,13 +70,19 @@ export class Carrier extends Entity {
         this.tickOriginGx = this.gx;
         this.tickOriginGy = this.gy;
 
-        // Decide where to go, attempt to move
-        // TODO
+        // Use the rule to decide where to go
+        let vector: Coord = { x: 0, y: 0 };
+        let rule = rules.get(this.ruleName);
+        if (rule) {
+            // Some rules must go straight on the first tick
+            if (s.tick === 0 && rule.firstTickStraight) {
+                rule = rules.get("Marcher")!;
+            }
+            vector = rule.decision(this, s);
+        }
 
-        // For now, just attempt to move in our bearing direction
+        // We can only move if there's a path on our desired vector
         const adj = s.adjacency;
-
-        const vector = headingToVector(this.heading);
         const vectorKey = getCoordKey(vector);
         if (adj.available(coordKey, vectorKey)) {
             this.move(vector);
@@ -186,10 +188,21 @@ export class Carrier extends Entity {
     }
 }
 
-export function renderCarrierInit(draw: Draw, gx: number, gy: number, heading: number) {
+export function renderCarrierInit(
+    draw: Draw,
+    gx: number,
+    gy: number,
+    heading: number,
+    highlighted: boolean,
+) {
     const s = carrierSprites[heading];
-    const x = gridToPixelX(gx) - s.spr.width / 2;
-    const y = gridToPixelY(gy) - s.spr.height + 4;
+    const px = gridToPixelX(gx);
+    const py = gridToPixelY(gy);
+    const x = px - s.spr.width / 2;
+    const y = py - s.spr.height + 4;
     const t = s.mirror ? mirrorTransform : undefined;
+    if (highlighted) {
+        draw.circle(px, py - 2, 9, 8, Colors.white);
+    }
     draw.sprite(s.spr, 0, x, y, t);
 }

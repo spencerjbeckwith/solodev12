@@ -8,6 +8,7 @@ export type TextFunction = (state: GameState) => string;
 export class TextElement extends UIElement {
     text: TextFunction;
     options?: DrawTextOptions;
+    width?: number;
 
     constructor(
         engine: Engine,
@@ -24,6 +25,16 @@ export class TextElement extends UIElement {
     frame() {}
 
     render() {
-        this.engine.core.draw.text(this.text(this.engine.state), this.x, this.y, this.options);
+        if (this.width) {
+            this.engine.core.draw.textWrap(
+                this.text(this.engine.state),
+                this.x,
+                this.y,
+                this.width,
+                this.options,
+            );
+        } else {
+            this.engine.core.draw.text(this.text(this.engine.state), this.x, this.y, this.options);
+        }
     }
 }

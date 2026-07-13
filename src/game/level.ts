@@ -99,6 +99,7 @@ export class Level {
                 gx,
                 gy,
                 heading: 6,
+                ruleName: "Marcher",
             });
 
             // If no node at this location, create one
@@ -299,7 +300,7 @@ export class Level {
         }
     }
 
-    render(draw: Draw, state: GameStates, playerEdges?: Edges) {
+    render(draw: Draw, state: GameStates, hightlightNode: Coord | null, playerEdges?: Edges) {
         // Render edges (each lands below the node)
         for (const [edgeKey, edge] of this.edges) {
             this.renderEdge(draw, edge, false);
@@ -322,7 +323,17 @@ export class Level {
         if (state !== "run") {
             // Render init objects
             for (const [coordKey, carrierInit] of this.carriers) {
-                renderCarrierInit(draw, carrierInit.gx, carrierInit.gy, carrierInit.heading);
+                let highlight = false;
+                if (hightlightNode) {
+                    highlight = getCoordKey(hightlightNode) === coordKey;
+                }
+                renderCarrierInit(
+                    draw,
+                    carrierInit.gx,
+                    carrierInit.gy,
+                    carrierInit.heading,
+                    highlight,
+                );
             }
             for (const [coordKey, destinationInit] of this.destinations) {
                 renderDestinationInit(
