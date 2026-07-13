@@ -8,6 +8,7 @@ import { Parcel } from "./entities/parcel";
 import { Destination } from "./entities/destination";
 import { Entity } from "./entities/entity";
 import { Engine } from "../engine";
+import { staticLevels } from "./staticlevels";
 
 export interface EditState {
     entityToggle: "carrier" | "destination" | "parcel" | null;
@@ -30,7 +31,7 @@ export interface RunState {
     destinations: Map<string, Destination>; // Indexed by coordKey
 }
 
-export type GameStates = "edit" | "solve" | "run";
+export type GameStates = "title" | "edit" | "solve" | "run" | "win";
 
 export class GameState {
     state: GameStates;
@@ -40,6 +41,7 @@ export class GameState {
     runState: RunState | null;
     canEdit: boolean;
     highlightNode: Coord | null;
+    levelNumber: number;
 
     constructor(level: Level, startState: Exclude<GameStates, "run">, canEdit: boolean) {
         this.state = startState;
@@ -49,6 +51,7 @@ export class GameState {
         this.runState = null;
         this.canEdit = canEdit;
         this.highlightNode = null;
+        this.levelNumber = 0;
     }
 
     // Edit <---> Solve <---> Run
@@ -57,6 +60,7 @@ export class GameState {
     toState(newState: GameStates) {
         const stateTransition = `${this.state}->${newState}`;
         switch (stateTransition) {
+            case "title->solve":
             case "edit->solve":
                 // Start solving the level from edit mode
                 this.state = newState;
@@ -73,6 +77,7 @@ export class GameState {
                 this.state = newState;
                 this.runState = null;
                 break;
+            case "title->edit":
             case "solve->edit":
                 // Unset solve state, back to level edit mode
                 if (!this.canEdit) return;
@@ -80,6 +85,16 @@ export class GameState {
                 this.solveState = null;
                 this.editState = this.newEditState();
                 break;
+            case "run->win": {
+                this.state = newState;
+                this.solveState = null;
+                this.runState = null;
+                break;
+            }
+            case "win->edit": {
+                this.state = newState;
+                break;
+            }
             default:
                 // Do nothing on an undefined state transition
                 break;
@@ -399,5 +414,22 @@ export class GameState {
             }
         }
         return "blocked";
+    }
+
+    advanceLevel() {
+        this.levelNumber++;
+        if (this.levelNumber >= staticLevels.length) {
+            // Beat the game!
+            this.toState("win");
+        } else {
+            // Load the next level
+            console.log(`Loading level ${this.levelNumber}`);
+            this.level.load(staticLevels[this.levelNumber]);
+
+            // Manual reset of state for next level
+            this.state = "solve";
+            this.runState = null;
+            this.solveState = this.newSolveState();
+        }
     }
 }

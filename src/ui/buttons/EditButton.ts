@@ -8,7 +8,21 @@ export class EditButton extends Button {
         this.visible = this.engine.state.canEdit;
     }
 
+    frame() {
+        this.visible = this.engine.state.canEdit;
+        if (this.visible) {
+            super.frame();
+        }
+    }
+
     onClick() {
         this.engine.state.toState("edit");
+    }
+
+    render() {
+        if (!this.engine.state.canEdit) {
+            return;
+        }
+        super.render();
     }
 }

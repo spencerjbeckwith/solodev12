@@ -301,6 +301,8 @@ export class Level {
     }
 
     render(draw: Draw, state: GameStates, hightlightNode: Coord | null, playerEdges?: Edges) {
+        if (state === "win") return;
+
         // Render edges (each lands below the node)
         for (const [edgeKey, edge] of this.edges) {
             this.renderEdge(draw, edge, false);

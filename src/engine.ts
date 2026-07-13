@@ -17,6 +17,7 @@ const soundFiles = [
     "pickup",
     "deliver",
     "handoff",
+    "next_level",
 ] as const;
 type SoundName = (typeof soundFiles)[number];
 
@@ -31,6 +32,7 @@ const soundConfig: Record<SoundName, number> = {
     pickup: 1,
     deliver: 1,
     handoff: 1,
+    next_level: 1,
 };
 
 export interface Engine {
@@ -79,7 +81,7 @@ export function init(): Engine {
         }),
     ) as Record<SoundName, SoundEffect>;
 
-    const state = new GameState(new Level(), "solve", true);
+    const state = new GameState(new Level(), "title", true);
 
     const engine: Engine = {
         core,

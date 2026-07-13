@@ -1,0 +1,92 @@
+{
+  "nodes": [
+    {
+      "x": 1,
+      "y": 3
+    },
+    {
+      "x": 2,
+      "y": 3
+    },
+    {
+      "x": 3,
+      "y": 3
+    },
+    {
+      "x": 4,
+      "y": 3
+    },
+    {
+      "x": 5,
+      "y": 3
+    },
+    {
+      "x": 6,
+      "y": 3
+    }
+  ],
+  "edges": [
+    [
+      {
+        "x": 1,
+        "y": 3
+      },
+      {
+        "x": 2,
+        "y": 3
+      }
+    ],
+    [
+      {
+        "x": 2,
+        "y": 3
+      },
+      {
+        "x": 3,
+        "y": 3
+      }
+    ],
+    [
+      {
+        "x": 4,
+        "y": 3
+      },
+      {
+        "x": 5,
+        "y": 3
+      }
+    ],
+    [
+      {
+        "x": 5,
+        "y": 3
+      },
+      {
+        "x": 6,
+        "y": 3
+      }
+    ]
+  ],
+  "budget": 1,
+  "note": "Click and drag on the platforms to make paths. Get the package to the mailbox!",
+  "carriers": [
+    {
+      "gx": 1,
+      "gy": 3,
+      "heading": 0,
+      "ruleName": "Marcher"
+    }
+  ],
+  "parcels": [
+    {
+      "gx": 3,
+      "gy": 3
+    }
+  ],
+  "destinations": [
+    {
+      "gx": 6,
+      "gy": 3
+    }
+  ]
+}

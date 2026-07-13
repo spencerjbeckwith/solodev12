@@ -156,9 +156,9 @@ export class Carrier extends Entity {
             this.py += this.vector.y;
 
             // We're moving, so animate our steps
-            // Cycle through all four images CARRIER_STEPS_PER_TICK times over the tick
+            // Offset by 1 so movement begins with a step
             const progress = frame / TICK_FRAMES;
-            this.spriteImage = Math.floor(progress * CARRIER_STEPS_PER_TICK * 4) % 4;
+            this.spriteImage = (Math.floor(progress * CARRIER_STEPS_PER_TICK * 4) + 1) % 4;
 
             // Carry our Parcels along with us
             for (const parcel of this.parcels) {

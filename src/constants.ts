@@ -7,6 +7,6 @@ export const GRID_OFFSET_X = 32;
 export const GRID_OFFSET_Y = 0;
 export const GRID_SIZE = 32;
 
-export const TICK_FRAMES = 64;
+export const TICK_FRAMES = 48;
 export const WAIT_FRAMES = 1;
-export const CARRIER_STEPS_PER_TICK = 2;
+export const CARRIER_STEPS_PER_TICK = 1;

@@ -1,4 +1,4 @@
-import { VIEW_HEIGHT, VIEW_WIDTH } from "../constants";
+import { VIEW_WIDTH } from "../constants";
 import { Engine } from "../engine";
 import { GameStates } from "../game/state";
 import { CarrierButton } from "./buttons/toggles/CarrierButton";
@@ -21,6 +21,10 @@ import { BudgetUpButton } from "./buttons/BudgetUpButton";
 import { BudgetDownButton } from "./buttons/BudgetDownButton";
 import { NoteButton } from "./buttons/NoteButton";
 import { NoteText } from "./text/NoteText";
+import { Title } from "./title";
+import { TextButton } from "./buttons/TextButton";
+import { staticLevels } from "../game/staticlevels";
+import { WinScreen } from "./winscreen";
 
 export class Layout {
     engine: Engine;
@@ -34,6 +38,38 @@ export class Layout {
 
         // Declarative map of each element present in any given game state
         this.ui = {
+            title: [
+                new Title(engine),
+                new TextButton(
+                    engine,
+                    "Campaign",
+                    VIEW_WIDTH / 2,
+                    120,
+                    "#3d9ff4",
+                    () => {
+                        // Start game with pre-built levels
+                        engine.snd.next_level.play();
+                        engine.state.canEdit = false;
+                        engine.state.level.load(staticLevels[0]);
+                        engine.state.toState("solve");
+                    },
+                    canvas,
+                ),
+                new TextButton(
+                    engine,
+                    "Level Editor",
+                    VIEW_WIDTH / 2,
+                    150,
+                    "#f44d3d",
+                    () => {
+                        // Go straight to the editor
+                        engine.snd.stop.play();
+                        engine.state.canEdit = true;
+                        engine.state.toState("edit");
+                    },
+                    canvas,
+                ),
+            ],
             edit: [
                 new DoneButton(engine, canvas),
                 new CarrierButton(engine, canvas),
@@ -47,6 +83,9 @@ export class Layout {
                 new TextElement(engine, VIEW_WIDTH - 16, 15, (state) => `${state.level.budget}`, {
                     hAlign: "right",
                     vAlign: "middle",
+                    // Match NoteText's font so its textWrap measures line breaks correctly
+                    // (supersprite's textWrap measures with the previously-drawn element's font)
+                    fontSize: 12,
                 }),
                 new BudgetUpButton(engine, canvas),
                 new BudgetDownButton(engine, canvas),
@@ -61,7 +100,9 @@ export class Layout {
                     VIEW_WIDTH - 4,
                     4,
                     (state) => `Paths: ${state.solveState!.remaining}`,
-                    { hAlign: "right", vAlign: "top" },
+                    // Match NoteText's font so its textWrap measures line breaks correctly
+                    // (supersprite's textWrap measures with the previously-drawn element's font)
+                    { hAlign: "right", vAlign: "top", fontSize: 12 },
                 ),
                 new EdgeGrid(engine, canvas),
                 new NoteText(engine),
@@ -71,6 +112,23 @@ export class Layout {
                 new WinText(engine),
                 new NextButton(engine, canvas),
                 new NoteText(engine),
+            ],
+            win: [
+                new WinScreen(engine),
+                new TextButton(
+                    engine,
+                    "Level Editor",
+                    VIEW_WIDTH / 2,
+                    165,
+                    "#f44d3d",
+                    () => {
+                        // Go straight to the editor
+                        engine.snd.stop.play();
+                        engine.state.canEdit = true;
+                        engine.state.toState("edit");
+                    },
+                    canvas,
+                ),
             ],
         };
     }

@@ -9,17 +9,20 @@ export class NextButton extends Button {
     }
 
     onClick() {
-        // TODO: next button should progress to next level, or win the game
+        this.engine.snd.next_level.play();
+        this.engine.state.advanceLevel();
     }
 
     frame() {
         if (this.isWinState()) {
             super.frame();
         }
+        this.visible = !this.engine.state.canEdit;
     }
 
     render() {
-        if (this.isWinState()) {
+        this.visible = !this.engine.state.canEdit;
+        if (this.isWinState() && this.visible) {
             super.render();
         }
     }

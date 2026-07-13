@@ -36,8 +36,8 @@ npm test
 
 - [ ] Background
 - [ ] Music
-- [ ] Title Screen
-- [ ] Tutorial
-- [ ] Completion Screen
+- [x] Title Screen
+- [x] Tutorial
+- [x] Completion Screen
 - [ ] Cutesy Sounds
 - [ ] Indicator if multiple Carriers are on node
