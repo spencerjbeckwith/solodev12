@@ -6,7 +6,7 @@ This was my entry for the [Solo Jam Dev #12](https://itch.io/jam/solo-dev-jam-12
 
 ## Running locally
 
-This is build using my own [super game engine](https://github.com/spencerjbeckwith/super).
+This was built using my own [super game engine](https://github.com/spencerjbeckwith/super).
 
 ```bash
 npm install
