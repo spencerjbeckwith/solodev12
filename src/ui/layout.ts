@@ -52,6 +52,7 @@ export class Layout {
                         engine.state.canEdit = false;
                         engine.state.level.load(staticLevels[0]);
                         engine.state.toState("solve");
+                        engine.music.play();
                     },
                     canvas,
                 ),
@@ -66,6 +67,7 @@ export class Layout {
                         engine.snd.stop.play();
                         engine.state.canEdit = true;
                         engine.state.toState("edit");
+                        engine.music.play();
                     },
                     canvas,
                 ),

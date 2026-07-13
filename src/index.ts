@@ -1,4 +1,4 @@
-import { Color, Colors } from "supersprite";
+import { Color } from "supersprite";
 import { init } from "./engine";
 
 const engine = init();

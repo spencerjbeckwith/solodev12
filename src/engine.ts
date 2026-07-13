@@ -1,6 +1,6 @@
 import { Core } from "supersprite";
 import { UnifiedInput } from "supercontroller";
-import { AudioEngine, SoundEffect } from "supersound";
+import { AudioEngine, MusicTrack, SoundEffect } from "supersound";
 import { VIEW_HEIGHT, VIEW_WIDTH } from "./constants";
 import { GameState } from "./game/state";
 import { Layout } from "./ui/layout";
@@ -41,6 +41,7 @@ export interface Engine {
     snd: Record<SoundName, SoundEffect>;
     state: GameState;
     layout: Layout;
+    music: MusicTrack;
 }
 
 export function init(): Engine {
@@ -80,6 +81,8 @@ export function init(): Engine {
             return [name, sfx];
         }),
     ) as Record<SoundName, SoundEffect>;
+    const music = new MusicTrack(ae.context, "assets/sounds/music.ogg");
+    ae.register(music, "music");
 
     const state = new GameState(new Level(), "title", true);
 
@@ -88,6 +91,7 @@ export function init(): Engine {
         input,
         snd,
         state,
+        music,
         layout: null!,
     };
     engine.layout = new Layout(engine); // Fun workaround for dependency ordering... Oops.
