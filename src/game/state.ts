@@ -1,14 +1,18 @@
 import { Draw } from "supersprite";
 import { TICK_FRAMES, WAIT_FRAMES } from "../constants";
 import { Edges, Nodes, Edge, EdgePlacementResult } from "../types";
-import { getCoordKey, getEdgeKey, toVector } from "../utils";
+import { getEdgeKey } from "../utils";
 import { Adjacency } from "./adjacency";
-import { Carrier } from "./carrier";
+import { Carrier } from "./entities/carrier";
 import { Level } from "./level";
-import { Parcel } from "./parcel";
+import { Parcel } from "./entities/parcel";
+import { Destination } from "./entities/destination";
+import { Entity } from "./entities/entity";
 
 export interface EditState {
     carrierToggle: boolean;
+    parcelToggle: boolean;
+    destinationToggle: boolean;
 }
 
 export interface SolveState {
@@ -21,8 +25,8 @@ export interface RunState {
     framesLeft: number;
     nodes: Nodes;
     adjacency: Adjacency;
-    carriers: Carrier[];
-    parcel: Parcel;
+    entities: Entity[];
+    remainingDeliveries: number;
 }
 
 export type GameStates = "edit" | "solve" | "run";
@@ -71,6 +75,7 @@ export class GameState {
                 if (!this.canEdit) return;
                 this.state = newState;
                 this.solveState = null;
+                this.editState = this.newEditState();
                 break;
             default:
                 // Do nothing on an undefined state transition
@@ -84,9 +89,11 @@ export class GameState {
             const elapsed = Math.min(TICK_FRAMES, TICK_FRAMES - s.framesLeft);
             s.framesLeft--;
 
-            // Call frame on all Carriers
-            for (const carrier of s.carriers) {
-                carrier.frame(elapsed);
+            // Call frame on all Entities
+            for (const entity of s.entities) {
+                if (entity.active) {
+                    entity.frame(elapsed);
+                }
             }
 
             if (s.framesLeft === 0) {
@@ -104,26 +111,34 @@ export class GameState {
     tick(s: RunState) {
         s.tick++;
         s.framesLeft = TICK_FRAMES;
-        for (const carrier of s.carriers) {
-            carrier.tick(s);
+        for (const entity of s.entities) {
+            if (entity.active) {
+                entity.tick(s);
+            }
         }
         return s;
     }
 
     endTick(s: RunState) {
-        for (const carrier of s.carriers) {
-            carrier.endTick(s);
+        for (const entity of s.entities) {
+            if (entity.active) {
+                entity.endTick(s);
+            }
         }
 
-        // TODO check for handoff here
+        // TODO check for handoffs here
+
+        // TODO is the level over?
 
         return s;
     }
 
     render(draw: Draw) {
         if (this.state === "run") {
-            for (const carrier of this.runState!.carriers) {
-                carrier.render(draw);
+            for (const entity of this.runState!.entities) {
+                if (entity.active && entity.visible) {
+                    entity.render(draw);
+                }
             }
         }
     }
@@ -131,6 +146,8 @@ export class GameState {
     newEditState(): EditState {
         return {
             carrierToggle: false,
+            parcelToggle: false,
+            destinationToggle: false,
         };
     }
 
@@ -142,21 +159,32 @@ export class GameState {
     }
 
     newRunState(): RunState {
-        // Initialie Carriers into a list from the map
-        const carriers: Carrier[] = [];
+        let remainingDeliveries = 0;
+
+        // Initialie entities into lists from their maps
+        const entities: Entity[] = [];
         this.level.carriers.forEach((init) => {
-            carriers.push(new Carrier(init));
+            entities.push(new Carrier(init));
         });
+        this.level.parcels.forEach((init) => {
+            entities.push(new Parcel(init));
+        });
+        this.level.destinations.forEach((init) => {
+            entities.push(new Destination(init));
+            remainingDeliveries++;
+        });
+
         // Create adjacency
         const allEdges = new Map([...this.level.edges, ...this.solveState!.placed]);
         const adj = new Adjacency(allEdges);
+
         return {
             tick: 0,
             framesLeft: 0, // Wait until first tick() call to start
             nodes: this.level.nodes,
             adjacency: adj,
-            carriers: carriers,
-            parcel: new Parcel(this.level.parcel),
+            entities,
+            remainingDeliveries,
         };
     }
 

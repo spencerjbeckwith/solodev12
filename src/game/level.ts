@@ -1,9 +1,10 @@
 import { Draw } from "supersprite";
 import { Edge, EdgePlacementResult, Edges, Nodes } from "../types";
-import { CarrierInit, renderCarrierInit } from "./carrier";
-import { ParcelInit } from "./parcel";
+import { CarrierInit, renderCarrierInit } from "./entities/carrier";
+import { ParcelInit } from "./entities/parcel";
 import spr from "../sprites.json";
 import { getCoordKey, getEdgeKey, gridToPixelX, gridToPixelY } from "../utils";
+import { DestinationInit } from "./entities/destination";
 
 /** Immutable starting state of a playable level */
 export interface LevelDefinition {
@@ -11,7 +12,8 @@ export interface LevelDefinition {
     edges: Edges;
     budget: number;
     carriers: CarrierInit[];
-    parcel: ParcelInit;
+    parcels: ParcelInit[];
+    destinations: DestinationInit[];
 }
 
 /** Loaded LevelDefinition */
@@ -19,8 +21,11 @@ export class Level {
     nodes: Nodes;
     edges: Edges;
     budget: number;
-    carriers: Map<string, CarrierInit>; // Indexed by coordKey
-    parcel: ParcelInit;
+
+    // Indexed by coordKey
+    carriers: Map<string, CarrierInit>;
+    parcels: Map<string, ParcelInit>;
+    destinations: Map<string, DestinationInit>;
 
     constructor(definition?: LevelDefinition) {
         if (!definition) {
@@ -29,12 +34,19 @@ export class Level {
         this.nodes = definition.nodes;
         this.edges = definition.edges;
         this.budget = definition.budget;
-        this.parcel = definition.parcel;
 
-        // Load a CarrierInit for each one in the definition
+        // Load resources for each init
         this.carriers = new Map();
         for (const init of definition.carriers) {
-            this.carriers.set(getCoordKey(init.node), init);
+            this.carriers.set(getCoordKey({ x: init.gx, y: init.gy }), init);
+        }
+        this.parcels = new Map();
+        for (const init of definition.parcels) {
+            this.parcels.set(getCoordKey({ x: init.gx, y: init.gy }), init);
+        }
+        this.destinations = new Map();
+        for (const init of definition.destinations) {
+            this.destinations.set(getCoordKey({ x: init.gx, y: init.gy }), init);
         }
     }
 
@@ -78,7 +90,8 @@ export class Level {
             return false;
         } else {
             this.carriers.set(coordKey, {
-                node: coord,
+                gx: coord.x,
+                gy: coord.y,
                 heading: 6,
                 hasParcel: false,
             });
@@ -218,7 +231,11 @@ export class Level {
         if (!active) {
             // Render init objects
             for (const [coordKey, carrierInit] of this.carriers) {
-                renderCarrierInit(draw, carrierInit.node, carrierInit.heading);
+                renderCarrierInit(
+                    draw,
+                    { x: carrierInit.gx, y: carrierInit.gy },
+                    carrierInit.heading,
+                );
             }
         }
     }
@@ -278,8 +295,8 @@ export class Level {
             edges: new Map(),
             budget: 5,
             carriers: [],
-            // @ts-ignore
-            parcel: null, // TODO: define parcel
+            parcels: [],
+            destinations: [],
         };
         return def;
     }

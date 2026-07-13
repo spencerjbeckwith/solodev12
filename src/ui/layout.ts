@@ -2,8 +2,10 @@ import { VIEW_WIDTH } from "../constants";
 import { Engine } from "../engine";
 import { GameStates } from "../game/state";
 import { CarrierButton } from "./buttons/CarrierButton";
+import { DestinationButton } from "./buttons/DestinationButton";
 import { DoneButton } from "./buttons/DoneButton";
 import { EditButton } from "./buttons/EditButton";
+import { ParcelButton } from "./buttons/ParcelButton";
 import { RunButton } from "./buttons/RunButton";
 import { StopButton } from "./buttons/StopButton";
 import { EdgeGrid } from "./edgegrid";
@@ -26,6 +28,8 @@ export class Layout {
             edit: [
                 new DoneButton(engine, canvas),
                 new CarrierButton(engine, canvas),
+                new ParcelButton(engine, canvas),
+                new DestinationButton(engine, canvas),
                 new NodeGrid(engine, canvas),
                 new EdgeGrid(engine, canvas),
             ],

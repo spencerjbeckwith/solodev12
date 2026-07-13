@@ -97,25 +97,26 @@ export class Button extends UIElement {
 }
 
 export class ToggleButton extends Button {
-    toggled: boolean;
-
     constructor(
         engine: Engine,
         sprite: Sprite,
         x: number,
         y: number,
-        toggled: boolean,
         canvas?: HTMLCanvasElement,
         visible?: boolean,
         padding?: number,
     ) {
         super(engine, sprite, x, y, canvas, visible, padding);
-        this.toggled = toggled;
+    }
+
+    // Keep toggle state outside of the button (so others can potentially change it)
+    getToggled(): boolean {
+        // Override in child calsses
+        return false;
     }
 
     onClick() {
-        this.toggled = !this.toggled;
-        this.onToggle(this.toggled);
+        this.onToggle(!this.getToggled());
     }
 
     onToggle(toggled: boolean) {
@@ -124,7 +125,7 @@ export class ToggleButton extends Button {
 
     render() {
         super.render();
-        if (this.toggled) {
+        if (this.getToggled()) {
             const tx = this.x + (this.sprite.width - spr.check.width);
             const ty = this.y + (this.sprite.height - spr.check.height);
             this.engine.core.draw.sprite(spr.check, 0, tx, ty);

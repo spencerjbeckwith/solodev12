@@ -1,15 +1,16 @@
 import { Draw, Sprite, Transform } from "supersprite";
-import { Coord } from "../types";
-import spr from "../sprites.json";
+import { Coord } from "../../types";
+import spr from "../../sprites.json";
 import {
     getCoordKey,
     gridToPixelX,
     gridToPixelY,
     headingToVector,
     vectorToHeading,
-} from "../utils";
-import { CARRIER_STEPS_PER_TICK, GRID_SIZE, TICK_FRAMES } from "../constants";
-import { RunState } from "./state";
+} from "../../utils";
+import { CARRIER_STEPS_PER_TICK, GRID_SIZE, TICK_FRAMES } from "../../constants";
+import { RunState } from "../state";
+import { Entity, EntityInit } from "./entity";
 
 type CarrierSprite = { spr: Sprite; mirror: boolean };
 const carrierSprites: CarrierSprite[] = [
@@ -25,41 +26,32 @@ const carrierSprites: CarrierSprite[] = [
 const mirrorTransform = new Transform().translate(0.5, 0).scale(-1, 1).translate(-0.5, 0);
 
 /** Definition for the type/starting details of a Carrier */
-export interface CarrierInit {
-    node: Coord;
+export interface CarrierInit extends EntityInit {
     heading: number;
     hasParcel: boolean;
     // TODO: rule
 }
 
 /** Actual Carrier instance, active during run mode */
-export class Carrier {
-    gx: number;
-    gy: number;
+export class Carrier extends Entity {
     heading: number;
     hasParcel: boolean;
     // TODO: rule
 
     // Animation and movement
-    px: number;
-    py: number;
-    sprite: Sprite;
-    spriteImage: number;
     mirror: boolean;
     vector: Coord | null;
 
     constructor(init: CarrierInit) {
-        this.gx = init.node.x;
-        this.gy = init.node.y;
+        super(init);
         this.heading = init.heading;
         this.hasParcel = init.hasParcel;
 
         this.sprite = carrierSprites[this.heading].spr;
         this.mirror = carrierSprites[this.heading].mirror;
-        this.px = this.gridToPixelX(init.node.x);
-        this.py = this.gridToPixelY(init.node.y);
-        this.spriteImage = 0;
         this.vector = null;
+        this.px = this.gridToPixelX(this.gx);
+        this.py = this.gridToPixelY(this.gy);
     }
 
     tick(s: RunState) {
