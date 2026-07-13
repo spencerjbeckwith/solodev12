@@ -8,7 +8,7 @@ function main() {
 
     // Frame logic
     engine.layout.frame();
-    engine.state.frame();
+    engine.state.frame(engine);
 
     // Render
     engine.state.level.render(
@@ -17,7 +17,7 @@ function main() {
         engine.state.solveState?.placed,
     );
     engine.layout.render();
-    engine.state.render(engine.core.draw);
+    engine.state.render(engine);
 
     engine.core.endRender();
     engine.input.update();

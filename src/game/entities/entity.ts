@@ -1,6 +1,7 @@
-import { Draw, Sprite } from "supersprite";
+import { Sprite } from "supersprite";
 import { gridToPixelX, gridToPixelY } from "../../utils";
 import { RunState } from "../state";
+import { Engine } from "../../engine";
 
 export interface EntityInit {
     gx: number;
@@ -15,6 +16,8 @@ export abstract class Entity {
 
     sprite!: Sprite; // Must be set in the constructor in child classes
     spriteImage: number;
+    spriteOffsetX: number;
+    spriteOffsetY: number;
     visible: boolean;
     active: boolean;
 
@@ -24,17 +27,29 @@ export abstract class Entity {
         this.px = gridToPixelX(this.gx);
         this.py = gridToPixelY(this.gy);
         this.spriteImage = 0;
+        this.spriteOffsetX = 0;
+        this.spriteOffsetY = 0;
         this.visible = true;
         this.active = true;
     }
 
-    tick(s: RunState): void {}
+    /** Higher depth = drawn later, closer to the front */
+    get depth(): number {
+        return gridToPixelY(this.gy);
+    }
 
-    endTick(s: RunState): void {}
+    tick(e: Engine, s: RunState): void {}
 
-    frame(elapsed: number): void {}
+    endTick(e: Engine, s: RunState): void {}
 
-    render(draw: Draw): void {
-        //draw.sprite(this.sprite, this.spriteImage, this.px, this.py);
+    frame(e: Engine, elapsed: number): void {}
+
+    render(e: Engine): void {
+        e.core.draw.sprite(
+            this.sprite,
+            this.spriteImage,
+            this.px + this.spriteOffsetX,
+            this.py + this.spriteOffsetY,
+        );
     }
 }

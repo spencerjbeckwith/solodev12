@@ -43,7 +43,6 @@ export class EdgeGrid extends UIElement {
             // Listen for clicks within the nodes
             if (this.engine.input.mouse.pressed.mouseLeft) {
                 if (gx !== null && gy !== null) {
-                    // TODO in solve mode, don't allow drag to start without a node!
                     this.setDrag(gx, gy);
                 }
             }
@@ -55,7 +54,7 @@ export class EdgeGrid extends UIElement {
                     if (getCoordKey(this.from) !== getCoordKey(to)) {
                         if (
                             this.engine.state.state === "edit" &&
-                            this.engine.state.editState.carrierToggle
+                            this.engine.state.editState.entityToggle === "carrier"
                         ) {
                             // Carrier toggle is on, attempt to change a Carrier's heading
                             const ci = this.engine.state.level.getCarrierInit(

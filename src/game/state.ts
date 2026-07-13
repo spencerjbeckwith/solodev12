@@ -1,13 +1,14 @@
 import { Draw } from "supersprite";
 import { TICK_FRAMES, WAIT_FRAMES } from "../constants";
 import { Edges, Nodes, Edge, EdgePlacementResult } from "../types";
-import { getEdgeKey } from "../utils";
+import { getCoordKey, getEdgeKey } from "../utils";
 import { Adjacency } from "./adjacency";
 import { Carrier } from "./entities/carrier";
 import { Level } from "./level";
 import { Parcel } from "./entities/parcel";
 import { Destination } from "./entities/destination";
 import { Entity } from "./entities/entity";
+import { Engine } from "../engine";
 
 export interface EditState {
     entityToggle: "carrier" | "destination" | "parcel" | null;
@@ -25,6 +26,8 @@ export interface RunState {
     adjacency: Adjacency;
     entities: Entity[];
     remainingDeliveries: number;
+    carriers: Map<string, Carrier[]>; // Indexed by coordKey
+    parcels: Map<string, Parcel>; // Indexed by coordKey, keys deleted when Parcels are picked up
 }
 
 export type GameStates = "edit" | "solve" | "run";
@@ -81,7 +84,7 @@ export class GameState {
         }
     }
 
-    frame() {
+    frame(e: Engine) {
         if (this.state === "run") {
             const s = this.runState!;
             const elapsed = Math.min(TICK_FRAMES, TICK_FRAMES - s.framesLeft);
@@ -90,37 +93,55 @@ export class GameState {
             // Call frame on all Entities
             for (const entity of s.entities) {
                 if (entity.active) {
-                    entity.frame(elapsed);
+                    entity.frame(e, elapsed);
                 }
             }
 
             if (s.framesLeft === 0) {
                 // Tick is over
-                this.endTick(s);
+                this.endTick(e, s);
             }
 
             if (s.framesLeft === -WAIT_FRAMES) {
                 // Start new tick after waiting
-                this.tick(s);
+                this.tick(e, s);
             }
         }
     }
 
-    tick(s: RunState) {
+    tick(e: Engine, s: RunState) {
         s.tick++;
         s.framesLeft = TICK_FRAMES;
         for (const entity of s.entities) {
             if (entity.active) {
-                entity.tick(s);
+                entity.tick(e, s);
             }
         }
+
+        // Update lookup map for Carriers
+        s.carriers.clear();
+        for (const c of s.entities) {
+            if (c instanceof Carrier) {
+                const coordKey = getCoordKey(c.gx, c.gy);
+                if (s.carriers.has(coordKey)) {
+                    // Key already exists, meaning we have multiple Carriers on one node
+                    const list = s.carriers.get(coordKey);
+                    list!.push(c);
+                } else {
+                    // Key doesn't exist (yet - there may still be multiple Carriers that wind up here)
+                    const list = [c];
+                    s.carriers.set(coordKey, list);
+                }
+            }
+        }
+
         return s;
     }
 
-    endTick(s: RunState) {
+    endTick(e: Engine, s: RunState) {
         for (const entity of s.entities) {
             if (entity.active) {
-                entity.endTick(s);
+                entity.endTick(e, s);
             }
         }
 
@@ -131,12 +152,14 @@ export class GameState {
         return s;
     }
 
-    render(draw: Draw) {
+    render(e: Engine) {
         if (this.state === "run") {
-            for (const entity of this.runState!.entities) {
-                if (entity.active && entity.visible) {
-                    entity.render(draw);
-                }
+            // Render in depth order
+            const ordered = this.runState!.entities.filter(
+                (entity) => entity.active && entity.visible,
+            ).sort((a, b) => a.depth - b.depth);
+            for (const entity of ordered) {
+                entity.render(e);
             }
         }
     }
@@ -159,11 +182,19 @@ export class GameState {
 
         // Initialie entities into lists from their maps
         const entities: Entity[] = [];
+        const carriers: Map<string, Carrier[]> = new Map();
         this.level.carriers.forEach((init) => {
-            entities.push(new Carrier(init));
+            const c = new Carrier(init);
+            entities.push(c);
+            carriers.set(getCoordKey(c.gx, c.gy), [c]);
+            // Only one carrier can start on a node, so list can always start empty
         });
+        const parcels: Map<string, Parcel> = new Map();
         this.level.parcels.forEach((init) => {
-            entities.push(new Parcel(init));
+            const p = new Parcel(init);
+            entities.push(p);
+            parcels.set(getCoordKey(p.gx, p.gy), p);
+            // All parcels start sitting on the ground - Carriers may pick them up on their first tick
         });
         this.level.destinations.forEach((init) => {
             entities.push(new Destination(init));
@@ -181,6 +212,8 @@ export class GameState {
             adjacency: adj,
             entities,
             remainingDeliveries,
+            carriers,
+            parcels,
         };
     }
 

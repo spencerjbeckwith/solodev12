@@ -92,7 +92,6 @@ export class Level {
                 gx,
                 gy,
                 heading: 6,
-                hasParcel: false,
             });
 
             // If no node at this location, create one

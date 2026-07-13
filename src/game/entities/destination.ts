@@ -2,7 +2,9 @@ import { Entity, EntityInit } from "./entity";
 import spr from "../../sprites.json";
 import { RunState } from "../state";
 import { Draw } from "supersprite";
-import { gridToPixelX, gridToPixelY } from "../../utils";
+import { getCoordKey, gridToPixelX, gridToPixelY } from "../../utils";
+import { Carrier } from "./carrier";
+import { Engine } from "../../engine";
 
 export interface DestinationInit extends EntityInit {}
 
@@ -15,9 +17,28 @@ export class Destination extends Entity {
         this.delivered = false;
     }
 
-    endTick(s: RunState): void {
+    endTick(e: Engine, s: RunState): void {
         // If a Carrier is here with a Parcel, deliver it
-        // TODO
+        const carriers = s.carriers.get(getCoordKey(this.gx, this.gy));
+        if (carriers) {
+            for (const carrier of carriers) {
+                if (carrier.parcels.length > 0) {
+                    // One of them has at least one parcel!
+                    this.delivery(e, s, carrier);
+                    break;
+                }
+            }
+        }
+    }
+
+    attemptDelivery(e: Engine, s: RunState) {
+        // TODO call me on both tick and endTick
+    }
+
+    delivery(e: Engine, s: RunState, from: Carrier) {
+        if (from.parcels.length > 0) {
+            // TODO: what do we do here?
+        }
     }
 }
 

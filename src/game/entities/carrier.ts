@@ -11,6 +11,8 @@ import {
 import { CARRIER_STEPS_PER_TICK, GRID_SIZE, TICK_FRAMES } from "../../constants";
 import { RunState } from "../state";
 import { Entity, EntityInit } from "./entity";
+import { Parcel } from "./parcel";
+import { Engine } from "../../engine";
 
 type CarrierSprite = { spr: Sprite; mirror: boolean };
 const carrierSprites: CarrierSprite[] = [
@@ -28,14 +30,13 @@ const mirrorTransform = new Transform().translate(0.5, 0).scale(-1, 1).translate
 /** Definition for the type/starting details of a Carrier */
 export interface CarrierInit extends EntityInit {
     heading: number;
-    hasParcel: boolean;
     // TODO: rule
 }
 
 /** Actual Carrier instance, active during run mode */
 export class Carrier extends Entity {
     heading: number;
-    hasParcel: boolean;
+    parcels: Parcel[];
     // TODO: rule
 
     // Animation and movement
@@ -45,7 +46,7 @@ export class Carrier extends Entity {
     constructor(init: CarrierInit) {
         super(init);
         this.heading = init.heading;
-        this.hasParcel = init.hasParcel;
+        this.parcels = [];
 
         this.sprite = carrierSprites[this.heading].spr;
         this.mirror = carrierSprites[this.heading].mirror;
@@ -54,13 +55,20 @@ export class Carrier extends Entity {
         this.py = this.gridToPixelY(this.gy);
     }
 
-    tick(s: RunState) {
+    get depth(): number {
+        return this.py + this.sprite.height - 4;
+    }
+
+    tick(e: Engine, s: RunState) {
+        const coordKey = getCoordKey(this.gx, this.gy);
+        this.attemptPickup(e, s);
+
         // Decide where to go, attempt to move
         // TODO
 
         // For now, just attempt to move in our bearing direction
         const adj = s.adjacency;
-        const coordKey = getCoordKey({ x: this.gx, y: this.gy });
+
         const vector = headingToVector(this.heading);
         const vectorKey = getCoordKey(vector);
         if (adj.available(coordKey, vectorKey)) {
@@ -68,12 +76,13 @@ export class Carrier extends Entity {
         }
     }
 
-    endTick(s: RunState) {
+    endTick(e: Engine, s: RunState) {
         // Snap to place, unset vector and animation
         this.px = this.gridToPixelX(this.gx);
         this.py = this.gridToPixelY(this.gy);
         this.vector = null;
         this.spriteImage = 0;
+        this.attemptPickup(e, s);
     }
 
     /** Starts a movement for this Carrier for a tick */
@@ -95,7 +104,29 @@ export class Carrier extends Entity {
         this.gy += vector.y;
     }
 
-    frame(frame: number) {
+    attemptPickup(e: Engine, s: RunState) {
+        // Attempt to pick up any Parcels at our position
+        const coordKey = getCoordKey(this.gx, this.gy);
+        if (s.parcels.has(coordKey)) {
+            // Found one!
+            const p = s.parcels.get(coordKey);
+            this.pickup(e, s, p!);
+        }
+    }
+
+    pickup(e: Engine, s: RunState, parcel: Parcel) {
+        parcel.carrier = this;
+        this.parcels.push(parcel);
+        s.parcels.delete(getCoordKey(parcel.gx, parcel.gy));
+        e.snd.pickup.play();
+
+        // Snap the parcel onto us immediately, in case we don't move again.
+        parcel.px = this.px;
+        parcel.py = this.py;
+        parcel.updateOffset();
+    }
+
+    frame(e: Engine, frame: number) {
         // Move by our vector amount each frame
         if (this.vector) {
             this.px += this.vector.x;
@@ -105,11 +136,18 @@ export class Carrier extends Entity {
             // Cycle through all four images CARRIER_STEPS_PER_TICK times over the tick
             const progress = frame / TICK_FRAMES;
             this.spriteImage = Math.floor(progress * CARRIER_STEPS_PER_TICK * 4) % 4;
+
+            // Carry our Parcels along with us
+            for (const parcel of this.parcels) {
+                parcel.px = this.px;
+                parcel.py = this.py;
+                // No need to update parcel gx/gy anymore
+            }
         }
     }
 
-    render(draw: Draw) {
-        draw.sprite(
+    render(e: Engine) {
+        e.core.draw.sprite(
             this.sprite,
             this.spriteImage,
             this.px,
