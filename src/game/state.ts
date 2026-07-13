@@ -1,4 +1,3 @@
-import { Draw } from "supersprite";
 import { TICK_FRAMES, WAIT_FRAMES } from "../constants";
 import { Edges, Nodes, Edge, EdgePlacementResult } from "../types";
 import { getCoordKey, getEdgeKey } from "../utils";
@@ -28,6 +27,7 @@ export interface RunState {
     remainingDeliveries: number;
     carriers: Map<string, Carrier[]>; // Indexed by coordKey
     parcels: Map<string, Parcel>; // Indexed by coordKey, keys deleted when Parcels are picked up
+    destinations: Map<string, Destination>; // Indexed by coordKey
 }
 
 export type GameStates = "edit" | "solve" | "run";
@@ -147,7 +147,9 @@ export class GameState {
 
         // TODO check for handoffs here
 
-        // TODO is the level over?
+        if (s.remainingDeliveries === 0) {
+            console.log("Level complete!");
+        }
 
         return s;
     }
@@ -189,6 +191,7 @@ export class GameState {
             carriers.set(getCoordKey(c.gx, c.gy), [c]);
             // Only one carrier can start on a node, so list can always start empty
         });
+
         const parcels: Map<string, Parcel> = new Map();
         this.level.parcels.forEach((init) => {
             const p = new Parcel(init);
@@ -196,15 +199,21 @@ export class GameState {
             parcels.set(getCoordKey(p.gx, p.gy), p);
             // All parcels start sitting on the ground - Carriers may pick them up on their first tick
         });
+
+        const destinations: Map<string, Destination> = new Map();
         this.level.destinations.forEach((init) => {
-            entities.push(new Destination(init));
+            const d = new Destination(init);
+            entities.push(d);
             remainingDeliveries++;
+            destinations.set(getCoordKey(d.gx, d.gy), d);
+            // Destinations don't move (thank god)
         });
 
         // Create adjacency
         const allEdges = new Map([...this.level.edges, ...this.solveState!.placed]);
         const adj = new Adjacency(allEdges);
 
+        console.log(`Level start: ${remainingDeliveries} remaining deliveries.`);
         return {
             tick: 0,
             framesLeft: 0, // Wait until first tick() call to start
@@ -214,6 +223,7 @@ export class GameState {
             remainingDeliveries,
             carriers,
             parcels,
+            destinations,
         };
     }
 

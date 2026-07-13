@@ -15,30 +15,20 @@ export class Destination extends Entity {
         super(init);
         this.sprite = spr.destination;
         this.delivered = false;
+        this.spriteOffsetX = -spr.destination.width / 2;
+        this.spriteOffsetY = -spr.destination.height + 4;
     }
 
-    endTick(e: Engine, s: RunState): void {
-        // If a Carrier is here with a Parcel, deliver it
-        const carriers = s.carriers.get(getCoordKey(this.gx, this.gy));
-        if (carriers) {
-            for (const carrier of carriers) {
-                if (carrier.parcels.length > 0) {
-                    // One of them has at least one parcel!
-                    this.delivery(e, s, carrier);
-                    break;
-                }
-            }
-        }
+    get depth(): number {
+        return super.depth - 1;
     }
 
-    attemptDelivery(e: Engine, s: RunState) {
-        // TODO call me on both tick and endTick
-    }
-
-    delivery(e: Engine, s: RunState, from: Carrier) {
-        if (from.parcels.length > 0) {
-            // TODO: what do we do here?
-        }
+    /** Accepts a Parcel from a Carrier */
+    delivery(e: Engine, s: RunState) {
+        e.snd.deliver.play();
+        this.spriteImage = 1;
+        s.remainingDeliveries--;
+        console.log(`Delivery made. Remaining: ${s.remainingDeliveries}`);
     }
 }
 

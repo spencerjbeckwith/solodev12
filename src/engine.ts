@@ -50,6 +50,12 @@ export function init(): Engine {
             baseWidth: VIEW_WIDTH,
             baseHeight: VIEW_HEIGHT,
         },
+        drawDefaults: {
+            fontName: '"Jersey 10"', // I spent too long figuring out this needed to be quoted
+            fontSize: 16,
+            drawShadow: true,
+            shadowColor: "#303030",
+        },
     });
     const input = new UnifiedInput({
         referenceFrame: core.presenter.ctx?.canvas,

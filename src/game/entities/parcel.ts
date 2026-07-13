@@ -5,9 +5,7 @@ import { Draw } from "supersprite";
 import { gridToPixelX, gridToPixelY } from "../../utils";
 
 /** Definition of the starting Parcel for a level */
-export interface ParcelInit extends EntityInit {
-    // TODO
-}
+export interface ParcelInit extends EntityInit {}
 
 /** Actual Parcel instance, active during run mode */
 export class Parcel extends Entity {

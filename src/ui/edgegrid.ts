@@ -42,8 +42,14 @@ export class EdgeGrid extends UIElement {
         if (!this.dragging) {
             // Listen for clicks within the nodes
             if (this.engine.input.mouse.pressed.mouseLeft) {
+                // Only allow clicks within nodes if we aren't in edit mdoe
                 if (gx !== null && gy !== null) {
-                    this.setDrag(gx, gy);
+                    if (
+                        this.engine.state.state === "edit" ||
+                        this.engine.state.level.hasNode(gx, gy)
+                    ) {
+                        this.setDrag(gx, gy);
+                    }
                 }
             }
         } else {
@@ -118,7 +124,12 @@ export class EdgeGrid extends UIElement {
             if (gx !== null && gy !== null) {
                 // Mouse is within a node's clickable region, show an indicator
                 if (this.canvas) {
-                    this.canvas.style.cursor = "grab";
+                    if (
+                        this.engine.state.state === "edit" ||
+                        this.engine.state.level.hasNode(gx, gy)
+                    ) {
+                        this.canvas.style.cursor = "grab";
+                    }
                 }
             }
         } else {

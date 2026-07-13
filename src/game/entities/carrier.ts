@@ -13,6 +13,7 @@ import { RunState } from "../state";
 import { Entity, EntityInit } from "./entity";
 import { Parcel } from "./parcel";
 import { Engine } from "../../engine";
+import { Destination } from "./destination";
 
 type CarrierSprite = { spr: Sprite; mirror: boolean };
 const carrierSprites: CarrierSprite[] = [
@@ -62,6 +63,7 @@ export class Carrier extends Entity {
     tick(e: Engine, s: RunState) {
         const coordKey = getCoordKey(this.gx, this.gy);
         this.attemptPickup(e, s);
+        this.attemptDelivery(e, s);
 
         // Decide where to go, attempt to move
         // TODO
@@ -83,6 +85,7 @@ export class Carrier extends Entity {
         this.vector = null;
         this.spriteImage = 0;
         this.attemptPickup(e, s);
+        this.attemptDelivery(e, s);
     }
 
     /** Starts a movement for this Carrier for a tick */
@@ -104,8 +107,8 @@ export class Carrier extends Entity {
         this.gy += vector.y;
     }
 
+    /** Attempt to pick up any Parcels at our position */
     attemptPickup(e: Engine, s: RunState) {
-        // Attempt to pick up any Parcels at our position
         const coordKey = getCoordKey(this.gx, this.gy);
         if (s.parcels.has(coordKey)) {
             // Found one!
@@ -114,6 +117,7 @@ export class Carrier extends Entity {
         }
     }
 
+    /** Execute a pickup of a Parcel */
     pickup(e: Engine, s: RunState, parcel: Parcel) {
         parcel.carrier = this;
         this.parcels.push(parcel);
@@ -124,6 +128,27 @@ export class Carrier extends Entity {
         parcel.px = this.px;
         parcel.py = this.py;
         parcel.updateOffset();
+    }
+
+    /** Attempt to deliver any Parcels to Destinations at our position */
+    attemptDelivery(e: Engine, s: RunState) {
+        if (this.parcels.length > 0) {
+            const coordKey = getCoordKey(this.gx, this.gy);
+            if (s.destinations.has(coordKey)) {
+                const destination = s.destinations.get(coordKey)!;
+                if (destination.spriteImage === 0) {
+                    // Not already-delivered
+                    const parcel = this.parcels.pop()!;
+                    parcel.active = false;
+                    this.deliver(e, s, destination);
+                }
+            }
+        }
+    }
+
+    /** Execute a delivery of a Parcel */
+    deliver(e: Engine, s: RunState, destination: Destination) {
+        destination.delivery(e, s);
     }
 
     frame(e: Engine, frame: number) {

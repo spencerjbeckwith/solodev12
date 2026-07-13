@@ -12,6 +12,8 @@ import { EdgeGrid } from "./edgegrid";
 import { UIElement } from "./element";
 import { NodeGrid } from "./nodegrid";
 import { TextElement } from "./text/text";
+import { WinText } from "./text/WinText";
+import { NextButton } from "./buttons/NextButton";
 
 export class Layout {
     engine: Engine;
@@ -47,7 +49,11 @@ export class Layout {
                 ),
                 new EdgeGrid(engine, canvas),
             ],
-            run: [new StopButton(engine, canvas)],
+            run: [
+                new StopButton(engine, canvas),
+                new WinText(engine),
+                new NextButton(engine, canvas),
+            ],
         };
     }
 
