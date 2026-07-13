@@ -74,8 +74,8 @@ export class Carrier extends Entity {
         let vector: Coord = { x: 0, y: 0 };
         let rule = rules.get(this.ruleName);
         if (rule) {
-            // Some rules must go straight on the first tick
-            if (s.tick === 0 && rule.firstTickStraight) {
+            // Some rules must go straight on the first tick.
+            if (s.tick === 1 && rule.firstTickStraight) {
                 rule = rules.get("Marcher")!;
             }
             vector = rule.decision(this, s);

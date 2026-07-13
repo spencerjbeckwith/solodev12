@@ -1,10 +1,11 @@
-import { Colors } from "supersprite";
+import { Color, Colors } from "supersprite";
 import { init } from "./engine";
 
 const engine = init();
+const bg = new Color("#4ca5ac");
 
 function main() {
-    engine.core.beginRender(Colors.gray);
+    engine.core.beginRender(bg);
 
     // Frame logic
     engine.layout.frame();
