@@ -23,12 +23,12 @@ npm test
 ## Tasks
 
 - [x] Carrier sprites
-- [ ] Parcel/Destination sprites
-- [ ] Implement Carrier
-- [ ] Implement Destination
+- [x] Parcel/Destination sprites
+- [x] Implement Carrier
+- [x] Implement Destination
 - [ ] Carrier tick logic/base Carrier types
-- [ ] Level completion
-- [ ] Save/Load Level
+- [x] Level completion
+- [x] Save/Load Level
 - [ ] Design levels
 - [ ] Itch page and deploy
 
@@ -39,3 +39,4 @@ npm test
 - [ ] Title Screen
 - [ ] Tutorial
 - [ ] Completion Screen
+- [ ] Cutesy Sounds

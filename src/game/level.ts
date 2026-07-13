@@ -1,5 +1,5 @@
 import { Draw } from "supersprite";
-import { Edge, EdgePlacementResult, Edges, Nodes } from "../types";
+import { Coord, Edge, EdgePlacementResult, Edges, Nodes } from "../types";
 import { CarrierInit, renderCarrierInit } from "./entities/carrier";
 import { ParcelInit, renderParcelInit } from "./entities/parcel";
 import spr from "../sprites.json";
@@ -22,6 +22,7 @@ export class Level {
     nodes: Nodes;
     edges: Edges;
     budget: number;
+    note?: string;
 
     // Indexed by coordKey
     carriers: Map<string, CarrierInit>;
@@ -247,12 +248,49 @@ export class Level {
         }
     }
 
-    load() {
-        // TODO: read from JSON (how does this handle maps?)
+    /** Loads a level from JSON */
+    load(json: any) {
+        try {
+            // All our Maps are reconstructed from their contents
+            const data = typeof json === "string" ? JSON.parse(json) : json;
+            this.budget = data.budget;
+            this.note = data.note;
+            this.nodes = new Map(data.nodes.map((c: Coord) => [getCoordKey(c), c]));
+            this.edges = new Map(data.edges.map((e: Edge) => [getEdgeKey(e), e]));
+            this.carriers = new Map(
+                data.carriers.map((c: CarrierInit) => [getCoordKey(c.gx, c.gy), c]),
+            );
+            this.parcels = new Map(
+                data.parcels.map((p: ParcelInit) => [getCoordKey(p.gx, p.gy), p]),
+            );
+            this.destinations = new Map(
+                data.destinations.map((d: DestinationInit) => [getCoordKey(d.gx, d.gy), d]),
+            );
+        } catch (err) {
+            console.error("Unable to load level!");
+            console.error(err);
+        }
     }
 
-    save() {
-        // TODO: write to JSON (how does this handle maps?)
+    /** Writes the raw level to JSON */
+    save(): string | null {
+        try {
+            // Map keys are rebuilt on load-time from the contents (coordKeys)
+            const data = {
+                nodes: [...this.nodes.values()],
+                edges: [...this.edges.values()],
+                budget: this.budget,
+                note: this.note,
+                carriers: [...this.carriers.values()],
+                parcels: [...this.parcels.values()],
+                destinations: [...this.destinations.values()],
+            };
+            return JSON.stringify(data, null, 2);
+        } catch (err) {
+            console.error("Unable to save level!");
+            console.error(err);
+            return null;
+        }
     }
 
     render(draw: Draw, state: GameStates, playerEdges?: Edges) {

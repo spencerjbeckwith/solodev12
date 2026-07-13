@@ -14,6 +14,9 @@ import { NodeGrid } from "./nodegrid";
 import { TextElement } from "./text/text";
 import { WinText } from "./text/WinText";
 import { NextButton } from "./buttons/NextButton";
+import { SaveButton } from "./buttons/SaveButton";
+import { LoadButton } from "./buttons/LoadButton";
+import { TrashButton } from "./buttons/TrashButton";
 
 export class Layout {
     engine: Engine;
@@ -34,6 +37,9 @@ export class Layout {
                 new DestinationButton(engine, canvas),
                 new NodeGrid(engine, canvas),
                 new EdgeGrid(engine, canvas),
+                new SaveButton(engine, canvas),
+                new LoadButton(engine, canvas),
+                new TrashButton(engine, canvas),
             ],
             solve: [
                 new RunButton(engine, canvas),
